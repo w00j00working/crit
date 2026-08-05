@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="ko" class="crit-shell-real" style="--accent: #545e92;"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Crit — 메모장</title>
+<style>
+  :root {
+    --accent:#B26A9E;
+    color-scheme: dark;
+    accent-color: var(--accent);
+    --bg:     color-mix(in srgb, var(--accent) 5%,  #131216);
+    --panel:  color-mix(in srgb, var(--accent) 8%, #1d1b21);
+    --panel2: color-mix(in srgb, var(--accent) 10%, #26242c);
+    --line:   color-mix(in srgb, var(--accent) 18%, #34313a);
+    --text:   color-mix(in srgb, var(--accent) 5%,  #f0edf3);
+    --dim:    color-mix(in srgb, var(--accent) 12%, #9a95a0);
+    --desc:   color-mix(in srgb, var(--accent) 12%, #d1cdd8);
+  }
+  body.light {
+    color-scheme: light;
+    --bg:     color-mix(in srgb, var(--accent) 3%,  #f7f6f8);
+    --panel:  color-mix(in srgb, var(--accent) 4%,  #ffffff);
+    --panel2: color-mix(in srgb, var(--accent) 5%,  #efedf1);
+    --line:   color-mix(in srgb, var(--accent) 13%, #d9d6dd);
+    --text:   color-mix(in srgb, var(--accent) 8%, #27242a);
+    --dim:    color-mix(in srgb, var(--accent) 9%, #6f6a76);
+    --desc:   color-mix(in srgb, var(--accent) 15%, #565060);
+  }
+  * { box-sizing:border-box; }
+  html { scrollbar-width:thin; scrollbar-color: color-mix(in srgb, var(--accent) 45%, var(--line)) transparent; }
+  ::-webkit-scrollbar { width:8px; height:8px; }
+  ::-webkit-scrollbar-track { background:transparent; }
+  ::-webkit-scrollbar-thumb { background:color-mix(in srgb, var(--accent) 45%, var(--line)); border-radius:8px; }
+  body { margin:0; background:var(--bg); color:var(--text);
+    font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif; line-height:1.65; }
+  .wrap { max-width:1160px; margin:0 auto; padding:20px 16px 30px; display:flex; flex-direction:column; height:100vh; }
+
+  /* 상단 전역 메뉴 */
+  .topnav { display:flex; gap:6px; align-items:center; padding:2px 2px 0; margin-bottom:6px; padding-bottom:9px;
+    border-bottom:1px solid var(--line); flex:none; }
+  .navid { display:flex; align-items:center; gap:7px; font-size:13.5px; font-weight:800;
+    letter-spacing:-.3px; margin-right:10px; padding:2px 2px; }
+  .navgear { margin-left:auto; display:flex; padding:6px !important; border-radius:8px !important; }
+  .topnav a { padding:5px 14px; border-radius:999px; font-size:12.5px;
+    color:var(--dim); text-decoration:none; border:1px solid transparent; transition:.12s; }
+  .topnav a:hover { color:var(--text); border-color:var(--line); }
+  .topnav .on { background:color-mix(in srgb, var(--accent) 16%, var(--panel2));
+    border:1px solid color-mix(in srgb, var(--accent) 45%, var(--line));
+    color:var(--text); font-weight:600; }
+
+  .toolbar { flex:none; display:flex; gap:8px; align-items:center;
+    padding:10px 2px; margin-bottom:14px; border-bottom:1px solid var(--line); }
+  .toolbar .ttl { font-size:14px; font-weight:700; margin-right:auto; }
+  .toolbar button { background:var(--panel2); color:var(--dim); border:1px solid var(--line);
+    border-radius:8px; padding:5px 11px; font-size:12.5px; cursor:pointer; font-family:inherit; }
+  .toolbar button:hover { color:var(--text); border-color:var(--accent); }
+  .settings { position:relative; }
+  .spanel { display:none; position:absolute; right:0; top:36px; z-index:20; width:270px;
+    background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px;
+    box-shadow:0 10px 30px #0008; }
+  .spanel.open { display:block; }
+  .spanel h4 { margin:0 0 8px; font-size:12.5px; color:var(--dim); font-weight:600; }
+  .srow { display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:13px; margin-bottom:8px; }
+  .srow input[type=color] { width:34px; height:24px; border:none; background:none; padding:0; cursor:pointer; }
+  .srow label { display:flex; align-items:center; gap:4px; font-size:12.5px; color:var(--dim); cursor:pointer; }
+  .cwrap { display:flex; align-items:center; gap:6px; }
+  .hexin { width:74px; background:var(--panel2); border:1px solid var(--line); border-radius:6px;
+    color:var(--text); font-size:12px; padding:4px 6px; font-family:Consolas,"D2Coding",monospace; }
+  input[type=radio] { appearance:none; -webkit-appearance:none; width:15px; height:15px; flex:none;
+    border:1.5px solid var(--line); background:var(--panel2); cursor:pointer;
+    margin:0 3px 0 0; vertical-align:-2px; transition:.12s; border-radius:50%; }
+  input[type=radio]:checked { background:var(--accent); border-color:var(--accent);
+    box-shadow:inset 0 0 0 3px var(--panel); }
+  input::placeholder, textarea::placeholder { color:color-mix(in srgb, var(--accent) 30%, var(--dim)); }
+
+  /* 좌 메모 리스트 + 우 편집기 */
+  .layout { flex:1; min-height:0; display:flex; gap:14px; }
+  .side { width:280px; flex:none; background:var(--panel); border:1px solid var(--line);
+    border-radius:14px; padding:12px; display:flex; flex-direction:column; min-height:0; }
+  .newbtn { width:100%; background:color-mix(in srgb, var(--accent) 16%, var(--panel2));
+    color:var(--text); border:1px solid color-mix(in srgb, var(--accent) 45%, var(--line));
+    border-radius:9px; padding:7px; font-size:12.5px; cursor:pointer; font-family:inherit; flex:none; }
+  .newbtn:hover { border-color:var(--accent); }
+  .memolist { flex:1; overflow:auto; margin-top:4px; min-height:0; }
+  .mrow { padding:9px 11px; border-radius:10px; cursor:pointer; border:1px solid transparent; margin-bottom:4px; transition:.12s; }
+  .mrow:hover { border-color:var(--line); }
+  .mrow.on { background:color-mix(in srgb, var(--accent) 13%, var(--panel2));
+    border-color:color-mix(in srgb, var(--accent) 45%, var(--line)); }
+  .mt { font-size:13px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .mp { font-size:11px; color:var(--dim); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .empty { color:var(--dim); font-size:12.5px; font-style:italic; text-align:center; padding:28px 0; }
+
+  .main { flex:1; min-width:0; border:1px solid var(--line); border-radius:14px;
+    background:var(--panel); display:flex; flex-direction:column; padding:18px 20px; }
+  .mhead { flex:none; display:flex; justify-content:flex-end; margin-bottom:8px; }
+  .seg { display:flex; border:1px solid var(--line); border-radius:8px; overflow:hidden; }
+  .seg button { background:var(--panel2); color:var(--dim); border:none; padding:4px 13px;
+    font-size:12px; cursor:pointer; font-family:inherit; }
+  .seg button.on { background:color-mix(in srgb, var(--accent) 18%, var(--panel2)); color:var(--text); font-weight:600; }
+  .mtitle { background:none; border:none; color:var(--text); font-family:inherit;
+    font-size:calc(17px * var(--mz, 1)); font-weight:800; letter-spacing:-.3px; outline:none;
+    padding:0 0 10px; border-bottom:1px solid var(--line); margin-bottom:12px; flex:none; }
+  .mbody { flex:1; background:none; border:none; color:var(--desc); font-family:inherit;
+    font-size:calc(13.5px * var(--mz, 1)); line-height:1.8; outline:none; resize:none; min-height:0; }
+  /* 마크다운 미리보기 */
+  .mdview { flex:1; overflow:auto; min-height:0; color:var(--desc);
+    font-size:calc(13.5px * var(--mz, 1)); line-height:1.8; }
+  .mdview h1, .mdview h2, .mdview h3 { color:var(--text); letter-spacing:-.3px;
+    margin:0.9em 0 0.35em; line-height:1.35; }
+  .mdview h1:first-child, .mdview h2:first-child, .mdview h3:first-child { margin-top:0; }
+  .mdview h1 { font-size:1.45em; } .mdview h2 { font-size:1.25em; } .mdview h3 { font-size:1.1em; }
+  .mdview p { margin:0.4em 0; }
+  .mdview ul, .mdview ol { margin:0.4em 0; padding-left:1.5em; }
+  .mdview li { margin:0.15em 0; }
+  .mdview code { background:var(--panel2); border:1px solid var(--line); border-radius:5px;
+    padding:1px 6px; font-size:0.9em; font-family:Consolas,"D2Coding",monospace; }
+  .mdview pre { background:var(--panel2); border:1px solid var(--line); border-radius:9px;
+    padding:10px 13px; overflow:auto; margin:0.6em 0; }
+  .mdview pre code { background:none; border:none; padding:0; }
+  .mdview blockquote { margin:0.5em 0; padding:2px 0 2px 12px;
+    border-left:3px solid color-mix(in srgb, var(--accent) 55%, var(--line)); color:var(--dim); }
+  .mdview hr { border:none; border-top:1px solid var(--line); margin:0.9em 0; }
+  .mdview a { color:var(--accent); }
+  .mdview strong { color:var(--text); }
+  .mfoot { flex:none; display:flex; justify-content:flex-end; padding-top:10px; }
+  .delbtn { background:var(--panel2); color:#e08a8a; border:1px solid var(--line); border-radius:8px;
+    padding:5px 13px; font-size:12.5px; cursor:pointer; font-family:inherit; }
+  .delbtn:hover { border-color:#a84848; }
+  .mainempty { margin:auto; color:var(--dim); font-size:13px; font-style:italic; }
+
+  /* 확인 모달 */
+  .overlay { position:fixed; inset:0; z-index:60; background:#0008; display:flex; align-items:center; justify-content:center; }
+  .modal { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:18px; width:320px; }
+  .modal p { margin:0 0 14px; font-size:13.5px; }
+  .mbtns { display:flex; gap:8px; justify-content:flex-end; }
+  .mbtns button { background:var(--panel2); color:var(--text); border:1px solid var(--line);
+    border-radius:8px; padding:6px 14px; font-size:13px; cursor:pointer; font-family:inherit; }
+  .mbtns button.danger { background:#a84848; border-color:#a84848; color:#fff; }
+  @media (max-width:760px) { .layout { flex-direction:column; } .side { width:100%; max-height:40vh; } }
+</style><style>/* crit-nofocus */ *:focus, *:focus-visible { outline: none !important; box-shadow: none; }</style><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"><!-- crit-font --><style>/* crit-scrollbar: 얇은 테마 스크롤바 (화살표 버튼 제거) */
+* { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--accent) 30%, var(--line)) transparent; }
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--accent) 28%, var(--line)); border-radius: 999px; }
+*::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--accent) 48%, var(--line)); }
+*::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+*::-webkit-scrollbar-corner { background: transparent; }
+</style><style>/* crit-no-themebtn: 전역 테마 페이지는 개별 테마 버튼 불필요 */ .toolbar .settings { display: none !important; }</style><style>/* crit-memo-lock-style */ #ml-pw { width:100%; background:var(--panel2); border:1px solid var(--line); border-radius:8px; padding:8px 10px; color:var(--text); font-size:13px; font-family:inherit; outline:none; margin-top:4px; } #ml-pw:focus { border-color:var(--accent); }</style><style>/* crit-nav-accent: 활성 탭·닉네임 포인트 컬러 톤 */
+html:not(.crit-embedded) .topnav .on { background: color-mix(in srgb, var(--accent) 26%, var(--panel2)) !important;
+  color: color-mix(in srgb, var(--accent) 60%, var(--text)) !important;
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--line)) !important; }
+html:not(.crit-embedded) .navid { color: color-mix(in srgb, var(--accent) 55%, var(--text)); }
+</style><style>/* crit-badge-accent */
+.memolist .mrow.on { background: color-mix(in srgb, var(--accent) 18%, var(--panel2)) !important;
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--line)) !important; }
+.memolist .mrow.on .mt { color: color-mix(in srgb, var(--accent) 55%, var(--text)); }
+#newbtn { background: color-mix(in srgb, var(--accent) 16%, var(--panel2)) !important;
+  border-color: color-mix(in srgb, var(--accent) 42%, var(--line)) !important;
+  color: color-mix(in srgb, var(--accent) 55%, var(--text)) !important; }</style><style>/* crit-nav-preheight */ html:not(.crit-embedded) .topnav { height: 54px; box-sizing: border-box; overflow: hidden; padding-top: 0 !important; padding-bottom: 0 !important; align-items: center !important; } html:not(.crit-embedded) .navid { line-height: 1 !important; } html:not(.crit-embedded) .topnav a { line-height: 1 !important; }</style><style>/* crit-md-accent */
+.mdview strong { color: color-mix(in srgb, var(--accent) 55%, var(--text)); }
+.mdview code { background: color-mix(in srgb, var(--accent) 12%, var(--panel2));
+  border: 1px solid color-mix(in srgb, var(--accent) 32%, var(--line));
+  color: color-mix(in srgb, var(--accent) 50%, var(--text)); border-radius: 5px; padding: 1px 6px; }
+.mdview blockquote { border-left-color: var(--accent) !important; }
+</style><style>.toolbar, .catbar, .ctl, .fadd, .fdel, #previewbtn, .gdel, .sdel, .srsz, .srot, .bctrl, .bph, .pimg .ph, .gadd, .sadd, .addbtn, .tagadd, .exaddbtn, .imgaddbtn, .pdel, .composer, .del, .tag .x, .badge .x, .teditbtn, .gologbtn, .newbtn, #trashbtn, select { display: none !important; } button:not(.linkbtn):not(.critkeep) { display: none !important; } input, textarea { pointer-events: none !important; } .sbox input, .msearch input { pointer-events: auto !important; } .mbtnrow { display: none !important; } .crit-mdview { display: block !important; } .topnav { border-bottom: none !important; flex: none !important; } #critscroll { scrollbar-gutter: stable; overflow-x: clip; } .dayview { position: static !important; top: auto !important; } .crit-pub-range { display:inline-block; width:100%; height:6px; background:var(--panel2); border-radius:999px; position:relative; } .crit-pub-range i { position:absolute; top:50%; width:14px; height:14px; border-radius:50%; background:var(--accent); border:2.5px solid color-mix(in srgb, var(--accent) 25%, var(--panel)); transform:translate(-50%,-50%); box-sizing:border-box; }</style></head>
+<body class="light preview"><nav class="topnav">
+    <span class="navid">우주</span>
+    
+    
+    
+    
+    
+    
+    
+  <a href="intro.html" onclick="event.preventDefault();location.href='intro.html?_r='+Date.now();">소개</a><a href="schedule.html" onclick="event.preventDefault();location.href='schedule.html?_r='+Date.now();">일정</a><a href="logs.html" onclick="event.preventDefault();location.href='logs.html?_r='+Date.now();">로그</a><a href="jagwan.html" onclick="event.preventDefault();location.href='jagwan.html?_r='+Date.now();">자관</a><a href="threads.html" onclick="event.preventDefault();location.href='threads.html?_r='+Date.now();">타래</a><a href="memo.html" class="on" onclick="event.preventDefault();location.href='memo.html?_r='+Date.now();">메모</a></nav><!-- crit-theme-early: 저장된 다크/라이트·포인트컬러를 첫 페인트 전에 적용해 기본값이 잠깐 보이는 깜빡임을 없앰 -->
+
+<div class="wrap crit-fixedbar"><div class="toolbar">
+    <span class="ttl"></span>
+    <button title="변경 내용을 게시본에 반영 (GitHub 저장소 업데이트)">업데이트</button><div class="settings">
+      <button id="setbtn">테마</button>
+      
+    </div>
+  </div></div><div id="critscroll"><div class="wrap" style="height: 100%;">
+  
+  
+  <div class="layout">
+    <aside class="side">
+      <div class="mbtnrow"><button class="newbtn" id="newbtn">+ 새 메모</button><button id="mfaddbtn">+ 폴더</button></div>
+      <div class="msearch"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="m21 21-4.3-4.3"></path></svg><input id="mq" placeholder="메모 검색" data-crit-i="4" value=""></div><div class="memolist" id="memolist"><div class="mrow on" data-mid="105"><div class="mt">테플</div>
+      <div class="mp">https://docs.google.com/document/d/1-qkFGYhRmh2IDcrGW2D0Ne4Nf6igcXb4Xa8V2-1A514/edit?usp=sharing</div><button class="mlock on" title="잠김 - 클릭해서 변경/해제"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></button></div><div class="mrow" data-mid="103"><div class="mt">메리디에스 1부 집필문서</div>
+      <div class="mp">https://docs.google.com/document/d/19nKW06oU3hVcXi8XjQFahyBoRg4N7ZdXOURz4Di3D-Y</div><button class="mlock on" title="잠김 - 클릭해서 변경/해제"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></button></div><div class="mrow" data-mid="101"><div class="mt">메리디에스 2부 간단 요약</div>
+      <div class="mp">해가 다시 돌아와야 한다고 생각하는 사람들과</div><button class="mlock on" title="잠김 - 클릭해서 변경/해제"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></button></div></div>
+    </aside>
+    <div class="main" id="main"></div>
+  </div>
+</div></div>
+
+
+<!-- Crit 앱 임베드용: 다른 페이지의 iframe 안에서 열릴 때는 자체 전역 메뉴를 숨깁니다 -->
+<style>html.crit-embedded .topnav { display: none !important; }</style>
+
+
+<!-- Crit: 상단 전역 메뉴 통일 - 페이지별 콘텐츠 폭(.wrap max-width)과 무관하게 항상 창 전체 폭의
+     고정 헤더로 표시해, 페이지를 오갈 때 메뉴 크기/위치가 변하지 않게 합니다 -->
+<style>
+  html:not(.crit-embedded) .topnav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+    background: var(--bg);
+    padding: 12px 20px 10px !important;
+    margin: 0 !important;
+  }
+  html:not(.crit-embedded) .wrap { padding-top: 58px !important; }
+  /* 모바일 폭에서는 닉네임 배지를 빼고 메뉴 간격/패딩을 줄여서, 항목이 두 줄로 줄바꿈되며
+     깨져 보이던 문제(실제로 겪음)를 없앤다 - 메뉴 개수가 늘어도 한 줄에 들어가게 */
+  @media (max-width: 760px) {
+    html:not(.crit-embedded) .navid { display: none !important; }
+    html:not(.crit-embedded) .topnav { gap: 2px !important; padding: 10px 10px 8px !important; }
+    html:not(.crit-embedded) .topnav a { padding: 4px 8px !important; font-size: 12px !important; }
+  }
+</style>
+
+<!-- Crit: 전역 테마 동기화 - 포인트 컬러/다크·라이트를 모든 화면이 공유합니다.
+     (자관/로그 페이지는 전역 값을 기본값으로만 받고, 그 안의 테마 변경은 해당 페이지에만 적용) -->
+
+
+
+<!-- crit-nav-apply: 환경설정(crit-settings)의 닉네임/아바타/메뉴 순서를 상단 메뉴에 반영 + 메뉴 글씨 확대 -->
+<style>
+  html:not(.crit-embedded) .topnav a { font-size: 14px !important; padding: 4px 15px !important; }
+  html:not(.crit-embedded) .navid { font-size: 15.5px !important; gap: 8px; }
+  .topnav .nava { width: 30px; height: 30px; border-radius: 9px; background-size: cover;
+    background-position: center; display: inline-block; vertical-align: middle; flex: none; }
+</style>
+
+
+<!-- crit-publish: 업데이트 버튼 = 게시본 설정대로 전체 게시 -->
+
+<!-- crit-global-publish: 게시본 설정(순서/배포 체크)대로 모든 페이지를 스냅샷해 한 번에 게시 -->
+
+<!-- crit-scroll-layout: 세로 스크롤이 상단 메뉴를 제외한 아래 영역에만 생기도록 재배치 -->
+<style>
+  html:not(.crit-embedded) body, html.crit-shell-real body { overflow: hidden; height: 100vh; margin: 0; padding: 0 !important;
+    display: flex; flex-direction: column; }
+  html:not(.crit-embedded) body > .topnav, html.crit-shell-real body > .topnav { position: static !important; flex: none; background: var(--bg);
+    height: 54px; box-sizing: border-box; align-items: center; flex-wrap: nowrap; overflow: hidden;
+    padding: 12px 20px 10px !important; margin: 0 !important; }
+  html:not(.crit-embedded) #critscroll, html.crit-shell-real #critscroll { flex: 1 1 auto; overflow-y: auto; min-height: 0; }
+  html:not(.crit-embedded) #critscroll > .wrap, html.crit-shell-real #critscroll > .wrap { padding-top: 6px !important; margin-top: 0 !important; }
+  html:not(.crit-embedded) .crit-fixedbar, html.crit-shell-real .crit-fixedbar { flex: none !important; display: block !important;
+    height: auto !important; min-height: 0 !important; overflow: visible;
+    padding-top: 2px !important; padding-bottom: 2px !important; margin-top: 0 !important; margin-bottom: 0 !important; }
+  html:not(.crit-embedded) .crit-fixedbar .toolbar, html.crit-shell-real .crit-fixedbar .toolbar { margin-top: 0 !important; margin-bottom: 0 !important;
+    padding-right: 22px !important; padding-left: 32px !important; }
+  /* 이전 페이지 버튼은 항상 왼쪽에 */
+  html:not(.crit-embedded) .crit-fixedbar .toolbar #backbtn, html.crit-shell-real .crit-fixedbar .toolbar #backbtn { justify-self: start; margin-right: auto; }
+  html:not(.crit-embedded) .crit-fixedbar .toolbar .tleft, html.crit-shell-real .crit-fixedbar .toolbar .tleft { justify-content: flex-start; }
+</style>
+
+<!-- crit-modal-dragguard: 모달 안에서 드래그를 시작해 바깥에서 놓아도 모달이 닫히지 않게 (전체 모달 공통) -->
+
+<!-- crit-memo-lock: 메모별 비밀번호 잠금 (게시본에서 잠긴 메모는 비밀번호를 맞혀야 열람) -->
+<style>
+  .mlock { position: absolute; right: 8px; top: 8px; width: 22px; height: 22px; border-radius: 6px;
+    border: 1px solid var(--line); background: var(--panel2); color: var(--dim); cursor: pointer;
+    display: none; align-items: center; justify-content: center; padding: 0; }
+  .memolist .mrow { position: relative; }
+  .memolist .mrow:hover .mlock { display: flex; }
+  .mlock.on { display: flex; color: var(--accent); border-color: var(--accent); }
+</style>
+
+<!-- crit-fresh-memo: 신규 시작이면 데모 데이터를 비운다 -->
+
+<!-- crit-memo-folders: 메모 폴더 구조 (+폴더, 접기, 우클릭 이동/이름변경/삭제, 저장) -->
+<style>
+  #mfaddbtn { width: 100%; margin-top: 6px; background: none; border: 1px dashed var(--line);
+    color: var(--dim); border-radius: 9px; padding: 7px 0; font-size: 12px; cursor: pointer; font-family: inherit; }
+  #mfaddbtn:hover { color: var(--text); border-color: var(--accent); }
+  .mfrow { display: flex; align-items: center; gap: 6px; padding: 7px 9px; border-radius: 9px;
+    color: var(--dim); font-size: 12.5px; font-weight: 700; cursor: pointer; user-select: none; margin-top: 4px; }
+  .mfrow:hover { color: var(--text); }
+  .mfrow .farr { transition: transform .15s; font-size: 10px; }
+  .mfrow.closed .farr { transform: rotate(-90deg); }
+  .memolist .mrow.inf { margin-left: 14px; }
+</style>
+
+<!-- crit-memo-dnd: 메모 드래그 정렬/폴더 이동 (고스트 + 점선 빈자리) + 순서 저장 -->
+<style>
+  .mgap { border: 2px dashed color-mix(in srgb, var(--accent) 60%, transparent); border-radius: 9px;
+    height: 40px; margin: 3px 0; background: color-mix(in srgb, var(--accent) 7%, transparent); }
+  .mgap.indent { margin-left: 14px; }
+  .mghost { position: fixed; z-index: 90; pointer-events: none; opacity: .85; transform: scale(.96);
+    transform-origin: top left; background: var(--panel); border: 1px solid var(--line); border-radius: 9px; }
+  .mrow.mdragging { display: none; }
+</style>
+
+<!-- crit-memo-store: 메모 내용 실제 저장·복원 -->
+
+<style>/* crit-memo-modal-style: 폴더 추가·메모 잠금 모달을 표준 모달 규격으로 통일 */
+.modal h3 { margin: 0 0 12px; font-size: 15px; letter-spacing: -.2px; }
+.modal .hint { margin: 0 0 12px !important; line-height: 1.6; }
+#mf-name, #ml-pw {
+  box-sizing: border-box !important; display: block; width: 100% !important;
+  background: var(--panel2) !important; border: 1px solid var(--line) !important;
+  border-radius: 9px !important; padding: 9px 11px !important; color: var(--text) !important;
+  font-size: 13.5px !important; font-family: inherit !important; outline: none !important;
+  margin: 0 0 14px !important;
+}
+#mf-name:focus, #ml-pw:focus { border-color: color-mix(in srgb, var(--accent) 60%, var(--line)) !important; }
+.mbtns { margin-top: 2px; }
+.mbtns button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+</style>
+<!-- crit-close-modal: X 버튼 → 트레이 최소화/완전 종료 선택 (기억하기) -->
+
+<!-- crit-fancy-all: 앱의 모든 셀렉트를 테마 드롭다운으로 (동적 생성/표시 전환 포함) -->
+<style>
+  .fwrap { position: relative; flex: 1; display: flex; min-width: 0; }
+  .fwrap .fsel { flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; padding: 8px 11px;
+    color: var(--text); font-size: 13px; font-family: inherit; cursor: pointer; text-align: left; min-width: 0; }
+  .fwrap .fsel { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .fwrap .fsel::after { content: "▾"; font-size: 10px; color: var(--dim); flex: none; }
+  .fwrap .fsel:hover, .fwrap .fsel.open { border-color: color-mix(in srgb, var(--accent) 55%, var(--line)); }
+  .fwrap .fmenu { position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 80;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 4px;
+    box-shadow: 0 10px 30px #0007; max-height: 240px; overflow-y: auto; }
+  .fwrap .fitem { padding: 7px 11px; border-radius: 7px; font-size: 13px; color: var(--text); cursor: pointer;
+    display: flex; align-items: center; gap: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .fwrap .fitem:hover { background: color-mix(in srgb, var(--accent) 20%, var(--panel2)); }
+  .fwrap .fitem.on { color: color-mix(in srgb, var(--accent) 65%, var(--text)); font-weight: 700; }
+  .fwrap .fdot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+</style>
+
+<!-- crit-extlink: 외부 링크는 항상 기본 브라우저로 (프로토콜 없는 주소 보정 포함) -->
+
+<!-- crit-memo-secret: 비밀 폴더 표시 + 게시본에서 폴더째 제외 -->
+<style>
+  .mfrow.secret { opacity: .75; }
+  .mfrow .fsec-ico { margin-left: 5px; display: inline-flex; color: var(--dim); }
+</style>
+
+<!-- crit-memo-search: 메모 검색창 + 새 메모/폴더 버튼 한 줄 -->
+<style>
+  .msearch { display: flex; align-items: center; gap: 7px; background: var(--panel2);
+    border: 1px solid var(--line); border-radius: 9px; padding: 7px 10px; margin-bottom: 6px; }
+  .msearch svg { flex: none; color: var(--dim); }
+  .msearch input { flex: 1; min-width: 0; background: none; border: none; outline: none;
+    color: var(--text); font-size: 12.5px; font-family: inherit; }
+  .msearch input::placeholder { color: color-mix(in srgb, var(--accent) 30%, var(--dim)); }
+  .mrow.mhidden, .mfrow.mhidden { display: none !important; }
+  #memolist.msearching .mrow:not(.mhidden) { display: block !important; }
+  #memolist.msearching .mfrow { display: none !important; }
+  .mbtnrow { display: flex; gap: 6px; align-items: stretch; margin: 0 0 6px; }
+  .mbtnrow > button { flex: 1; width: auto !important; margin: 0 !important;
+    padding: 8px 0 !important; border-radius: 9px !important; font-size: 12px !important;
+    box-sizing: border-box; line-height: 1.2; }
+</style>
+
+<style>/* crit-toolbar-fullbleed: 고정 툴바(아래 구분선 포함)를 화면 전체 폭으로 */
+/* crit-nohscroll: 50vw 계산이 스크롤바 폭을 무시해 생기는 가로 스크롤 차단 */
+html:not(.crit-embedded), html:not(.crit-embedded) body, html.crit-shell-real, html.crit-shell-real body { overflow-x: clip !important; }
+html:not(.crit-embedded) .toolbar, html.crit-shell-real .toolbar {
+  margin-left: calc(50% - 50vw) !important;
+  margin-right: calc(50% - 50vw) !important;
+  padding-left: calc(50vw - 50%) !important;
+  padding-right: calc(50vw - 50%) !important;
+}
+</style>
+<!-- crit-memo-folderdnd(v3): 폴더 드래그 - 점선 빈자리 + 묶음 이동, 바깥 메모와도 순서 교차 -->
+<style>
+  .fgap { border: 2px dashed color-mix(in srgb, var(--accent) 60%, transparent); border-radius: 9px;
+    height: 34px; margin: 4px 0; background: color-mix(in srgb, var(--accent) 7%, transparent); }
+  .fhide { display: none !important; }
+  .fghost { position: fixed; z-index: 140; pointer-events: none; opacity: .85;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 9px; padding: 7px 9px; }
+</style>
+
+<style>/* crit-hscrollbar-kill: 어떤 경우에도 문서 가로 스크롤바가 보이지 않게 (내부 컴포넌트 스크롤은 유지) */
+html:not(.crit-embedded)::-webkit-scrollbar:horizontal, html.crit-shell-real::-webkit-scrollbar:horizontal,
+html:not(.crit-embedded) body::-webkit-scrollbar:horizontal, html.crit-shell-real body::-webkit-scrollbar:horizontal { display: none; height: 0; }
+#critscroll { overflow-x: clip !important; }
+</style>
+<!-- crit-search-uni: 사이드바 검색창 규격 통일 (로그 페이지와 동일) -->
+<style>
+  .msearch { height: 32px; box-sizing: border-box; padding: 0 10px; margin: 0 0 6px;
+    border-radius: 9px; align-items: center; }
+  .msearch input { font-size: 12.5px; }
+  .msearch svg { width: 13px; height: 13px; }
+</style>
+<!-- crit-memo-toporder: 폴더/바깥 메모 통합 상위 순서 - 렌더 마지막에 저장된 순서로 재배치 -->
+
+<script>(function(){function show(list,idx){var ov=document.createElement("div");ov.style.cssText="position:fixed;inset:0;z-index:99999;background:#000c;display:flex;align-items:center;justify-content:center;cursor:zoom-out";var img=document.createElement("img");img.style.cssText="max-width:86vw;max-height:88vh;border-radius:10px";var navs=[];function pos(){var r=img.getBoundingClientRect();if(r.width<10)return;navs.forEach(function(nb){nb.el.style.width=Math.max(6,nb.dir<0?r.left:(innerWidth-r.right))+"px";});}function render(){img.src=list[idx];}img.addEventListener("load",pos);window.addEventListener("resize",pos);render();img.addEventListener("click",function(e){e.stopPropagation()});ov.appendChild(img);if(list.length>1){[[-1,"M15 18l-6-6 6-6"],[1,"M9 6l6 6-6 6"]].forEach(function(cf){var b=document.createElement("button");b.className="critkeep";b.innerHTML='<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="'+cf[1]+'"/></svg>';b.style.cssText="position:fixed;top:25%;bottom:25%;"+(cf[0]<0?"left:0":"right:0")+";display:flex;align-items:center;justify-content:center;background:transparent;border:none;color:#f0edf3;cursor:pointer;z-index:2;transition:background .12s";b.addEventListener("click",function(e){e.stopPropagation();idx=(idx+cf[0]+list.length)%list.length;render();});navs.push({dir:cf[0],el:b});ov.appendChild(b);});requestAnimationFrame(pos);}ov.addEventListener("click",function(e){if(e.target===img)return;ov.remove()});document.body.appendChild(ov);}function bgUrl(el){var bg=getComputedStyle(el).backgroundImage;if(!bg||bg.indexOf("url(")!==0)return null;var u=bg.slice(4,-1);var q=u.charAt(0);if(q===String.fromCharCode(34)||q===String.fromCharCode(39))u=u.slice(1,-1);return u;}document.addEventListener("click",function(e){if(!e.target.closest)return;var g=e.target.closest(".gitem:not(.gadd)");if(g){var gal=g.closest(".gal")||g.parentNode;var all=Array.prototype.slice.call(gal.querySelectorAll(".gitem:not(.gadd)"));var list=all.map(bgUrl).filter(Boolean);var idx=Math.max(0,all.indexOf(g));if(list.length){show(list,Math.min(idx,list.length-1));return;}}var pg=e.target.closest(".pimgs .pimg");if(pg){var pw=pg.closest(".pimgs");var pall=Array.prototype.slice.call(pw.querySelectorAll(".pimg"));var plist=pall.map(bgUrl).filter(Boolean);if(plist.length){show(plist,Math.max(0,pall.indexOf(pg)));return;}}var im=e.target.closest(".pimgs img, .ptxt img, .btext img, .mcontent img, .pv-text img");if(im&&im.src)show([im.src],0);});})();(function(){document.querySelectorAll(".logrow").forEach(function(r){var a=r.querySelector(".llink");if(!a)return;r.style.cursor="pointer";r.addEventListener("click",function(){if(a.getAttribute("target")==="_blank")window.open(a.getAttribute("href"));else location.href=a.getAttribute("href");})});})();(function(){document.addEventListener("click",function(e){var sp=e.target.closest?e.target.closest(".post.spoiled"):null;if(!sp)return;e.preventDefault();e.stopPropagation();var ov=document.createElement("div");ov.style.cssText="position:fixed;inset:0;z-index:99998;background:#0008;display:flex;align-items:center;justify-content:center";var md=document.createElement("div");md.style.cssText="background:var(--panel,#1d1b21);border:1px solid var(--line,#34313a);border-radius:14px;padding:20px 22px;width:min(300px,86vw);color:var(--text,#f0edf3)";md.innerHTML="<div style=\"font-size:14px;font-weight:800;margin-bottom:8px\">스포일러</div><div style=\"color:var(--dim,#9a95a0);font-size:12.5px;line-height:1.7;margin-bottom:14px\">스포일러를 확인하시겠습니까?</div>";var row=document.createElement("div");row.style.cssText="display:flex;gap:8px;justify-content:flex-end";function mkB(t,pr){var b=document.createElement("button");b.textContent=t;b.className="critkeep";b.style.cssText="border-radius:8px;padding:6px 14px;font-size:13px;cursor:pointer;font-family:inherit;"+(pr?"background:var(--accent,#B26A9E);border:1px solid var(--accent,#B26A9E);color:#fff":"background:var(--panel2,#26242c);border:1px solid var(--line,#34313a);color:var(--text,#f0edf3)");row.appendChild(b);return b;}mkB("취소").addEventListener("click",function(){ov.remove()});mkB("확인",1).addEventListener("click",function(){sp.classList.remove("spoiled");ov.remove()});md.appendChild(row);ov.appendChild(md);ov.addEventListener("click",function(e2){if(e2.target===ov)ov.remove()});document.body.appendChild(ov);},true);})();(function(){var CRIT_BUILD_TS=1785945673310;setTimeout(function(){try{fetch(location.pathname,{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){var m=t.match(/CRIT_BUILD_TS ?= ?(\d+)/);if(!m)return;var latest=Number(m[1]);if(latest>CRIT_BUILD_TS&&sessionStorage.getItem("crit-seen-build")!==String(latest)){sessionStorage.setItem("crit-seen-build",String(latest));location.reload();}}).catch(function(){});}catch(e){}},1200);})();</script><script>var MD=[{"id":105,"title":"테플","encBody":"e4TKl7oCi/fykhGHXzP24A==.K+mGq1q9oiepGX1/.aW+3PNKOy8ci8f76vJgD4fERds+qhEUsaXpVjbsYaY4H0Zt6gUfbgRcGLFHp7SeBvpQmbPIko1RWBdJzAfVgxATs0nvU/8Njm/HzMPptnXsASKFwNnJRPa7zxLYjz/xpwMkjojjn1g8DfbD+PZCZmg=="},{"id":103,"title":"메리디에스 1부 집필문서","encBody":"I1lwmeA28ZwYsqk4LTvB5A==.Uc4iAjo6Aqoyccdu.1APxoShd9AsRoyv5ze27zRDJ7E3x2Am96mWErR1CLVO2KeMtsmh1jNMufA1zI/aREFbCrPRDyBVOs+6sSXZpxnjEpzl1wOjNQlSFzGzTXlSe6wOl0tBNHS1WJqH8yNU="},{"id":101,"title":"메리디에스 2부 간단 요약","encBody":"Rzq6hKYPzQMNgdgCUiIfTA==.dJeUpdhGwldNp4wg.6CgkrQvd5/xN3w7BW0U+UOngMvgXmVgNEiKOm6vXmbjdc/lPHqoqDOAo9fnFTwOhrjygMzDL4bsVP8c87W972wewssIwjPyoBVFnhVTqaam1uIIZcPBIIPP28HDW2vp/xvVqwObN87JQ5k+Bzsf/FegVAukGuZm+MkjX8gKV0BpwCbs/tT63+dFmlKru7ujYlhKDjDySXkQQ+tH2kaVa3ylsxBwR32jcC5xQJUdsZ84roDlpaTRiGBCKZ/4zEmEtXH8s6Y0utoOrVYX5zFXNbP7Uu0srhQlxxeE/FHJQ1m1ZTZLpY7jhuABW8ttjNcZsp8AMjXthfcTU2o4Sp1GQDHFjOadDXsAHfEXeJFOIcvCB2FM+Swvl7FcMYh+sailXlnDTIWRWkNqtc3RhNFq0NHVDSyRJoMrVzGvRV47FvqXv3YQvGgRMgGhavzuydzBcCqYNMKtBzMF4nGgNB8PWK+reYpaDEnd5+yso3afZne8CBOfpkkwOBVHwnLI6Or0haC84GjQNJTX/Btzgr1spOXPcSgXvEkreCmYo3hDHiHQ646O8AiOLTxxISg3xhfMLZZcTO5qd+XGhgwozfiFS1/98xAqbRdg/Z8Slucsu2x0a0PflO9C82WwIAFDO0myVXQ3EugUiOCGTQBXOlwRB/yuke8tx+aCMs7/eRS0p63caB2V3Xk4OpAd9prTSaqBq+7vflOzlYLdAm4306+TuRfDzN08tx1AzNpXwJZwlNNYSRI4AVtbL4EaSp7T7M88zHY8nR1ghy85VcPmTeUzLyI7iJzuKT9EeQglf5P9RoggUpn/yZZFU+UBze6EH32pbM5iQw8/gikgwxBIMpm4d40yQfGfY+zY2bz4Ass+Oh1syxqD1lQis6DZMWcnpXM8eCvStzXrCyAlC0DUX7no3qbHc5pYlVEITeUbUxu22tK+pqlycuiXMWMKj160NoQygjv9+yn0f0nzMjEE/KPN/wuheBUUrKtvOhP2rTtnaHRobL56VuHID0cMZvcMP2FOPDIPQGCcoczPNnrIaS/QSSUnGB7x3As0qytE/Ig0sc9TGRhpH/zLHZSgOcqJsTNYdTzrLvyF767/EN8zsISJFBRvWWegQlYP2xIDd8NFxCQ=="}];var LK={"101":"7f861bcee185de001377d79e08af62e94b1e7718e2470e08520c917f8d953602","103":"7f861bcee185de001377d79e08af62e94b1e7718e2470e08520c917f8d953602","105":"e16c8155c3234583955a55967f1e258fdf4c1dd415c88d412ef6741511d410c8"};var mainEl=document.getElementById("main");function mdesc(t){return t.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}function mdinl(t){return t.replace(/\*\*([^*]+)\*\*/g,"<strong>$1</strong>").replace(/\*([^*]+)\*/g,"<em>$1</em>").replace(/~~([^~]+)~~/g,"<del>$1</del>").replace(/`([^`]+)`/g,"<code>$1</code>")}function mdrender(t){var out=[],inL=false;mdesc(t).split(/\r?\n/).forEach(function(ln){var s2=ln.trim();if(/^- /.test(s2)){if(!inL){out.push("<ul>");inL=true}out.push("<li>"+mdinl(s2.slice(2))+"</li>");return}if(inL){out.push("</ul>");inL=false}if(s2===""){out.push("<div style=\"height:1.1em\"></div>")}else if(/^###\s/.test(s2))out.push("<h3>"+mdinl(s2.slice(4))+"</h3>");else if(/^##\s/.test(s2))out.push("<h2>"+mdinl(s2.slice(3))+"</h2>");else if(/^#\s/.test(s2))out.push("<h1>"+mdinl(s2.slice(2))+"</h1>");else if(/^(---)$/.test(s2))out.push("<hr>");else if(/^&gt;\s?/.test(s2))out.push("<blockquote>"+mdinl(s2.replace(/^&gt;\s?/,""))+"</blockquote>");else out.push("<p>"+mdinl(s2)+"</p>")});if(inL)out.push("</ul>");return out.join("")}async function hx(t){var b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(t));return Array.prototype.map.call(new Uint8Array(b),function(x){return x.toString(16).padStart(2,"0")}).join("")}function ub(b){var s=atob(b),u=new Uint8Array(s.length);for(var i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return u}async function decBody(m,pass){var ps=m.encBody.split(".");var km=await crypto.subtle.importKey("raw",new TextEncoder().encode(pass),"PBKDF2",false,["deriveKey"]);var key=await crypto.subtle.deriveKey({name:"PBKDF2",salt:ub(ps[0]),iterations:250000,hash:"SHA-256"},km,{name:"AES-GCM",length:256},false,["decrypt"]);var pt=await crypto.subtle.decrypt({name:"AES-GCM",iv:ub(ps[1])},key,ub(ps[2]));return new TextDecoder().decode(pt)}function showMemo(m){mainEl.innerHTML="<div style=\"padding:10px 8px;font-size:13.5px;line-height:1.85\"><h2 style=\"margin:0 0 10px\">"+mdesc(m.title||"제목 없음")+"</h2>"+mdrender(m.body||"")+"</div>"}function askPw(m){mainEl.innerHTML='<div style="width:340px;max-width:calc(100% - 32px);box-sizing:border-box;margin:70px auto;text-align:center;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:30px 26px">'+'<div style="margin-bottom:10px;color:var(--dim)"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>'+'<div style="font-size:13.5px;margin-bottom:14px">\uC7A0\uAE34 \uBA54\uBAA8\uC608\uC694. \uBE44\uBC00\uBC88\uD638\uB97C \uC785\uB825\uD558\uC138\uC694.</div>'+'<input id="mpw" type="password" style="width:100%;box-sizing:border-box;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:9px 11px;color:var(--text);font-size:13px;outline:none;pointer-events:auto">'+'<div id="mpe" style="display:none;color:#e08b8b;font-size:12px;margin-top:8px">\uBE44\uBC00\uBC88\uD638\uAC00 \uB9DE\uC9C0 \uC54A\uC544\uC694.</div>'+'<button id="mpb" class="critkeep" style="margin-top:12px;background:var(--accent);border:none;color:#fff;border-radius:8px;padding:8px 20px;font-size:13px;cursor:pointer;font-family:inherit">\uD655\uC778</button></div>';var inp=mainEl.querySelector("#mpw"),btn=mainEl.querySelector("#mpb"),er=mainEl.querySelector("#mpe");inp.style.setProperty("pointer-events","auto","important");function go(){hx(inp.value).then(function(h){if(h!==LK[m.id]){er.style.display="";inp.focus();inp.select();return;}if(m.encBody&&m.body==null){decBody(m,h).then(function(b){m.body=b;showMemo(m);}).catch(function(){er.style.display="";});}else showMemo(m);})}btn.addEventListener("click",go);inp.addEventListener("keydown",function(e){if(e.key==="Enter")go()});inp.focus();}document.querySelectorAll("#memolist .mrow").forEach(function(r,i){var m=MD.filter(function(x){return String(x.id)===String(r.dataset.mid)})[0]||MD[i];if(!m)return;r.addEventListener("click",function(){document.querySelectorAll("#memolist .mrow").forEach(function(x){x.classList.remove("on")});r.classList.add("on");if(LK[m.id])askPw(m);else showMemo(m)})});document.querySelectorAll("#memolist .mrow").forEach(function(r){if(!LK[r.dataset.mid])return;Array.prototype.forEach.call(r.children,function(c){if(!c.classList||!c.classList.contains("mt"))c.style.display="none";});var t=r.querySelector(".mt");if(t&&!t.dataset.lk){t.dataset.lk="1";t.insertAdjacentHTML("afterbegin",'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:5px"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>');}});(function(){var mq=document.querySelector(".msearch input");if(!mq)return;mq.addEventListener("input",function(){var q=mq.value.trim().toLowerCase();document.querySelectorAll("#memolist .mrow").forEach(function(r){var m=MD.filter(function(x){return String(x.id)===String(r.dataset.mid)})[0];var hit=!q||(m&&(((m.title||"")+" "+(m.body||"")).toLowerCase().indexOf(q)!==-1));r.style.display=hit?"":"none";});document.querySelectorAll("#memolist .mfrow").forEach(function(f2){f2.style.display=q?"none":"";});});})();document.querySelectorAll("#memolist .mfrow").forEach(function(fr){fr.style.cursor="pointer";fr.addEventListener("click",function(){var closed=fr.classList.toggle("closed");var n=fr.nextElementSibling;while(n&&!n.classList.contains("mfrow")){if(n.classList.contains("mrow")&&n.classList.contains("inf"))n.style.display=closed?"none":"";n=n.nextElementSibling;}});});(function(){var r0=document.querySelector("#memolist .mrow.on")||document.querySelector("#memolist .mrow");if(!r0)return;r0.classList.add("on");var m0=MD.filter(function(x){return String(x.id)===String(r0.dataset.mid)})[0]||MD[0];if(!m0)return;if(LK[m0.id])askPw(m0);else showMemo(m0);})();</script></body></html>

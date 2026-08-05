@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="ko" style="--accent: #545e92;" class="crit-shell-real"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Crit — 소개</title>
+<style>
+  :root {
+    --accent:#B26A9E;
+    --bg:     color-mix(in srgb, var(--accent) 5%,  #131216);
+    --panel:  color-mix(in srgb, var(--accent) 8%, #1d1b21);
+    --panel2: color-mix(in srgb, var(--accent) 10%, #26242c);
+    --line:   color-mix(in srgb, var(--accent) 18%, #34313a);
+    --text:   color-mix(in srgb, var(--accent) 5%,  #f0edf3);
+    --dim:    color-mix(in srgb, var(--accent) 12%, #9a95a0);
+    --desc:   color-mix(in srgb, var(--accent) 12%, #d1cdd8);
+  }
+  body.light {
+    --bg:     color-mix(in srgb, var(--accent) 3%,  #f7f6f8);
+    --panel:  color-mix(in srgb, var(--accent) 4%,  #ffffff);
+    --panel2: color-mix(in srgb, var(--accent) 5%,  #efedf1);
+    --line:   color-mix(in srgb, var(--accent) 13%, #d9d6dd);
+    --text:   color-mix(in srgb, var(--accent) 8%, #27242a);
+    --dim:    color-mix(in srgb, var(--accent) 9%, #6f6a76);
+    --desc:   color-mix(in srgb, var(--accent) 15%, #565060);
+  }
+  * { box-sizing:border-box; }
+  html { scrollbar-width:thin; scrollbar-color: color-mix(in srgb, var(--accent) 45%, var(--line)) transparent; }
+  ::-webkit-scrollbar { width:8px; height:8px; }
+  ::-webkit-scrollbar-track { background:transparent; }
+  ::-webkit-scrollbar-thumb { background:color-mix(in srgb, var(--accent) 45%, var(--line)); border-radius:8px; }
+  ::-webkit-scrollbar-thumb:hover { background:color-mix(in srgb, var(--accent) 62%, var(--line)); }
+  body { margin:0; background:var(--bg); color:var(--text);
+    font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif; line-height:1.65; }
+  .wrap { max-width:640px; margin:0 auto; padding:24px 16px 80px; }
+
+  /* 툴바 */
+  .toolbar { position:sticky; top:0; z-index:3; background:color-mix(in srgb, var(--bg) 88%, transparent);  /* 스티커(4)가 위로 침범해도 보이게 스티커보다 아래 */
+    backdrop-filter:blur(8px); display:flex; gap:8px; flex-wrap:wrap; align-items:center;
+    padding:10px 2px; margin-bottom:14px; border-bottom:1px solid var(--line); }
+  .toolbar .ttl { font-size:14px; font-weight:700; margin-right:auto; }
+  .toolbar button { background:var(--panel2); color:var(--dim); border:1px solid var(--line);
+    border-radius:8px; padding:5px 11px; font-size:12.5px; cursor:pointer; font-family:inherit; }
+  .toolbar button.on { color:var(--text); border-color:var(--accent);
+    background:color-mix(in srgb, var(--accent) 18%, var(--panel2)); }
+  .iconbtn { display:flex; align-items:center; justify-content:center; padding:5px 9px; }
+  .iconbtn.on { color:var(--accent); border-color:var(--accent);
+    background:color-mix(in srgb, var(--accent) 14%, var(--panel2)); }
+  .settings { position:relative; }
+  .spanel { display:none; position:absolute; right:0; top:36px; z-index:20; width:270px;
+    background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px;
+    box-shadow:0 10px 30px #0008; }
+  .spanel.open { display:block; }
+  .spanel h4 { margin:0 0 8px; font-size:12.5px; color:var(--dim); font-weight:600; }
+  .srow { display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:13px; margin-bottom:8px; }
+  .srow input[type=color] { width:34px; height:24px; border:none; background:none; padding:0; cursor:pointer; }
+  .srow label { display:flex; align-items:center; gap:4px; font-size:12.5px; color:var(--dim); cursor:pointer; }
+  .cwrap { display:flex; align-items:center; gap:6px; }
+  .hexin { width:74px; background:var(--panel2); border:1px solid var(--line); border-radius:6px;
+    color:var(--text); font-size:12px; padding:4px 6px; font-family:Consolas,"D2Coding",monospace; }
+  input::placeholder, textarea::placeholder { color:color-mix(in srgb, var(--accent) 30%, var(--dim)); }
+
+  /* 커스텀 컨트롤 */
+  input[type=checkbox], input[type=radio] {
+    appearance:none; -webkit-appearance:none; width:15px; height:15px; flex:none;
+    border:1.5px solid var(--line); background:var(--panel2); cursor:pointer;
+    margin:0 3px 0 0; vertical-align:-2px; transition:.12s; }
+  input[type=checkbox] { border-radius:4.5px; }
+  input[type=radio] { border-radius:50%; }
+  input[type=checkbox]:hover, input[type=radio]:hover {
+    border-color:color-mix(in srgb, var(--accent) 55%, var(--line)); }
+  input[type=checkbox]:checked { background:var(--accent)
+    url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 7"/></svg>')
+    center/10px 10px no-repeat; border-color:var(--accent); }
+  input[type=radio]:checked { background:var(--accent); border-color:var(--accent);
+    box-shadow:inset 0 0 0 3px var(--panel); }
+  /* 슬라이더 */
+  input[type=range] { appearance:none; -webkit-appearance:none; width:100%; height:6px;
+    background:var(--panel2); border:1px solid var(--line); border-radius:999px; outline:none; }
+  input[type=range]::-webkit-slider-thumb { appearance:none; -webkit-appearance:none;
+    width:16px; height:16px; border-radius:50%; background:var(--accent);
+    border:3px solid color-mix(in srgb, var(--accent) 30%, var(--panel)); cursor:pointer; }
+  input[type=range]::-moz-range-thumb { width:14px; height:14px; border-radius:50%;
+    background:var(--accent); border:3px solid color-mix(in srgb, var(--accent) 30%, var(--panel)); cursor:pointer; }
+
+  /* 카드 */
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:16px;
+    padding:20px 22px; margin-bottom:14px; }
+  .card h2 { margin:0 0 14px; font-size:13px; color:var(--dim); font-weight:700;
+    letter-spacing:.3px; display:flex; align-items:center; gap:8px; }
+  .card h2::after { content:""; flex:1; border-top:1px solid var(--line); }
+
+  /* 헤더 배너 + 스티커 */
+  .banner { position:relative; height:190px; margin:-20px -22px 14px; border-radius:15px 15px 0 0;
+    background-color:var(--panel2); background-size:cover; background-position:center;
+    border-bottom:1px solid var(--line); }
+  .banner.noimg { background-image:linear-gradient(135deg,
+    color-mix(in srgb, var(--accent) 22%, var(--panel2)),
+    color-mix(in srgb, var(--accent) 8%, var(--panel2))); }
+  .bph { position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    color:var(--dim); font-size:12.5px; pointer-events:none; }
+  .banner:not(.noimg) .bph { display:none; }
+  .bctrl { position:absolute; top:10px; right:10px; display:flex; gap:6px; z-index:6; }  /* 버튼은 스티커보다 위 */
+  .bctrl button { background:color-mix(in srgb, var(--bg) 72%, transparent); backdrop-filter:blur(6px);
+    color:var(--text); border:1px solid var(--line); border-radius:8px; padding:4px 10px;
+    font-size:11.5px; cursor:pointer; font-family:inherit; }
+  .bctrl button:hover { border-color:var(--accent); }
+  .sticker { position:absolute; cursor:default; touch-action:none; z-index:4; user-select:none; }  /* 아바타(3)보다 위 */
+  .sticker img { width:100%; display:block; pointer-events:none; }
+  .sticker .sdel, .sticker .srsz { position:absolute; display:none; }
+  body:not(.preview) .sticker.sel .sdel, body:not(.preview) .sticker.sel .srsz { display:flex; }
+  .sticker .sdel { top:-9px; right:-9px; width:18px; height:18px; border-radius:50%;
+    background:#a84848; color:#fff; border:none; font-size:11px; line-height:1;
+    align-items:center; justify-content:center; cursor:pointer; }
+  .sticker .srsz { bottom:-7px; right:-7px; width:14px; height:14px; border-radius:50%;
+    background:var(--accent); border:2px solid var(--panel); cursor:nwse-resize; }
+  .sticker .srot { top:-7px; left:-7px; width:14px; height:14px; border-radius:50%;
+    background:var(--panel2); border:2px solid var(--accent); cursor:grab; position:absolute; display:none; }
+  body:not(.preview) .sticker.sel .srot { display:flex; }
+  body.preview .sticker { pointer-events:none; }
+  body.preview .bctrl { display:none; }
+  body.preview .bph { display:none; }
+
+  /* 프로필 */
+  .profile { display:flex; gap:18px; align-items:flex-start; }
+  .pimg { flex:none; width:96px; height:96px; border-radius:22px; background:var(--panel2);
+    border:1.5px dashed var(--line); display:flex; align-items:center; justify-content:center;
+    cursor:pointer; overflow:hidden; transition:.15s; position:relative;
+    margin-top:-46px; z-index:3; box-shadow:0 0 0 3.5px var(--panel); }
+  .pimg:hover { border-color:var(--accent); }
+  .pimg img { width:100%; height:100%; object-fit:cover; }
+  .pimg .ph { font-size:11px; color:var(--dim); text-align:center; line-height:1.5; padding:6px; }
+  .pmain { flex:1; min-width:0; }
+  .nick { font-size:22px; font-weight:800; letter-spacing:-.5px; background:none; border:none;
+    color:var(--text); font-family:inherit; width:100%; padding:0; outline:none;
+    border-bottom:1.5px dashed transparent; }
+  .tagline { font-size:13.5px; color:var(--desc); background:none; border:none; width:100%;
+    font-family:inherit; padding:0 0 0 7px; outline:none; margin-top:2px; border-bottom:1.5px dashed transparent;
+    resize:none; overflow:hidden; line-height:1.65; }
+  .mainintro { width:100%; background:none; border:none; color:var(--desc); font-family:inherit;
+    font-size:13.5px; line-height:1.8; outline:none; resize:none; overflow:hidden; padding:0;
+    border-left:3px solid transparent; }
+  body:not(.preview) .mainintro { border-left:3px solid color-mix(in srgb, var(--accent) 30%, var(--line));
+    padding-left:12px; }
+  body:not(.preview) .mainintro:focus { border-left-color:var(--accent); }
+  .linkbtns { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-top:10px; }
+  .linkbtn { display:inline-flex; align-items:center; gap:7px; background:var(--panel2);
+    border:1px solid color-mix(in srgb, var(--accent) 45%, var(--line)); border-radius:10px;
+    padding:8px 18px; font-size:13px; font-weight:600; color:var(--text); text-decoration:none; }
+  .linkbtn:hover { background:color-mix(in srgb, var(--accent) 16%, var(--panel2)); }
+  .linkbtn svg { width:13px; height:13px; color:var(--dim); }
+  body:not(.preview) .nick:hover, body:not(.preview) .nick:focus,
+  body:not(.preview) .tagline:hover, body:not(.preview) .tagline:focus {
+    border-bottom-color:color-mix(in srgb, var(--accent) 50%, var(--line)); }
+  .meta { display:flex; gap:14px; flex-wrap:wrap; margin-top:12px; font-size:12.5px; color:var(--dim); }
+  .meta .mitem { display:flex; align-items:center; gap:6px; }
+  .meta input { background:none; border:none; color:var(--text); font-family:inherit; font-size:12.5px;
+    outline:none; padding:0; border-bottom:1.5px dashed transparent; width:130px; }
+  body:not(.preview) .meta input:hover, body:not(.preview) .meta input:focus {
+    border-bottom-color:color-mix(in srgb, var(--accent) 50%, var(--line)); }
+  .meta svg { width:13px; height:13px; flex:none; }
+
+  /* 세그먼트 (포지션) */
+  .seg { display:inline-flex; background:var(--panel2); border:1px solid var(--line);
+    border-radius:10px; padding:3px; gap:3px; }
+  .seg button { background:none; border:none; color:var(--dim); font-family:inherit;
+    font-size:13px; padding:5px 16px; border-radius:7px; cursor:pointer; font-weight:600; }
+  .seg button.on { background:var(--accent); color:#fff; }
+
+  /* 태그/칩 */
+  .tagrow { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+  .tag { display:inline-flex; align-items:center; gap:6px; border-radius:999px;
+    padding:2px 12px; font-size:12.5px; font-weight:600; cursor:default;
+    color:color-mix(in srgb, var(--accent) 52%, var(--text));
+    background:color-mix(in srgb, var(--accent) 14%, var(--panel2));
+    border:1px solid color-mix(in srgb, var(--accent) 42%, var(--line)); }
+  .tag .x { cursor:pointer; color:var(--dim); font-weight:400; line-height:1; }
+  .tag .x:hover { color:var(--text); }
+  .tag.mine { background:color-mix(in srgb, #c85a5a 14%, var(--panel2));
+    border-color:color-mix(in srgb, #c85a5a 45%, var(--line));
+    color:color-mix(in srgb, #c85a5a 62%, var(--text)); }
+  .genre { border-radius:999px; padding:2px 14px; font-size:12.5px; font-weight:600;
+    background:var(--panel2); border:1px solid var(--line); color:var(--dim);
+    cursor:pointer; font-family:inherit; transition:.12s; }
+  .genre.on { background:color-mix(in srgb, var(--accent) 18%, var(--panel2));
+    border-color:var(--accent); color:color-mix(in srgb, var(--accent) 52%, var(--text)); }
+  .genre.bad.on { background:color-mix(in srgb, #c85a5a 16%, var(--panel2));
+    border-color:#c85a5a; color:color-mix(in srgb, #c85a5a 62%, var(--text)); }
+  .tagadd { display:flex; gap:6px; margin-top:10px; }
+  .tagadd input { flex:1; background:var(--panel2); border:1px solid var(--line); border-radius:8px;
+    color:var(--text); font-family:inherit; font-size:12.5px; padding:5px 12px; outline:none; line-height:1.65; }
+  .tagadd input:focus { border-color:var(--accent); }
+  .tagadd button { background:color-mix(in srgb, var(--accent) 16%, var(--panel2));
+    color:color-mix(in srgb, var(--accent) 75%, var(--text));
+    border:1px solid color-mix(in srgb, var(--accent) 45%, var(--line)); border-radius:8px;
+    padding:5px 14px; font-size:12.5px; cursor:pointer; font-family:inherit; line-height:1.65; font-weight:600; }
+
+  /* 게이지 */
+  .gauge { margin-bottom:16px; }
+  .gauge:last-child { margin-bottom:2px; }
+  .glabels { display:flex; justify-content:space-between; font-size:12px; color:var(--dim); margin-bottom:6px; }
+  .glabels b { color:var(--text); font-size:12.5px; }
+
+  /* 뱃지 줄 */
+  .brow { display:flex; gap:10px; margin-bottom:10px; align-items:flex-start; }
+  .brow .blabel { width:110px; flex:none; background:none; border:none; color:var(--dim);
+    font-family:inherit; font-size:13px; font-weight:600; outline:none; padding:5px 0;
+    border-bottom:1.5px dashed transparent; }
+  body:not(.preview) .brow .blabel:hover, body:not(.preview) .brow .blabel:focus {
+    border-bottom-color:color-mix(in srgb, var(--accent) 50%, var(--line)); }
+  .brow .bwrap { flex:1; display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+  .badd { display:inline-flex; gap:4px; }
+  .badd input { width:110px; background:var(--panel2); border:1px solid var(--line); border-radius:999px;
+    color:var(--text); font-family:inherit; font-size:12.5px; padding:4px 12px; outline:none; line-height:1.65; }
+  .badd input:focus { border-color:var(--accent); }
+  .badd button { background:color-mix(in srgb, var(--accent) 16%, var(--panel2)); color:var(--text);
+    border:1px solid color-mix(in srgb, var(--accent) 45%, var(--line)); border-radius:999px;
+    padding:4px 12px; font-size:12.5px; cursor:pointer; font-family:inherit; line-height:1.65; }
+  .brow .del { background:none; border:none; color:var(--dim); cursor:pointer; padding:6px 4px;
+    display:flex; border-radius:6px; flex:none; }
+  .brow .del:hover { color:#e08a8a; background:var(--panel2); }
+  body.preview .badd, body.preview .brow .del { display:none; }
+
+  /* 커스텀 항목 */
+  .crow { display:flex; gap:8px; margin-bottom:8px; align-items:center; }
+  .crow input { background:var(--panel2); border:1px solid var(--line); border-radius:8px;
+    color:var(--text); font-family:inherit; font-size:13px; padding:6px 10px; outline:none; }
+  .crow input:focus { border-color:var(--accent); }
+  .crow .ck { width:130px; flex:none; font-weight:600; }
+  .crow .cv { flex:1; }
+  .crow .del { background:none; border:none; color:var(--dim); cursor:pointer; padding:4px;
+    display:flex; border-radius:6px; }
+  .crow .del:hover { color:#e08a8a; background:var(--panel2); }
+  .addbtn { background:var(--panel2); border:1px dashed var(--line); border-radius:8px;
+    color:var(--dim); font-family:inherit; font-size:12.5px; padding:7px; width:100%;
+    cursor:pointer; margin-top:2px; }
+  .addbtn:hover { border-color:var(--accent); color:var(--text); }
+
+  /* 미리보기 모드: 편집 장치 숨김 */
+  body.preview .tagadd, body.preview .addbtn, body.preview .tag .x, body.preview .crow .del,
+  body.preview #linkrows { display:none; }
+  body.preview .pimg { border-style:solid; cursor:default; }
+  body.preview .genre:not(.on) { display:none; }
+  body.preview .genre { cursor:default; }
+  body.preview input, body.preview textarea { pointer-events:none; }
+  body.preview .seg button:not(.on) { display:none; }
+  body.preview .seg { background:none; border:none; padding:0; }
+  /* 게시본에서는 이 세그먼트를 정적 칩(연한 배경+얇은 테두리)으로 바꿔서 굽는데, 앱 미리보기는
+     그냥 진한 색으로 채워진 원래 버튼 스타일이 그대로 남아 둘이 달라 보였다 - 게시본과 동일하게 */
+  body.preview .seg button.on { background:color-mix(in srgb, var(--accent) 18%, var(--panel2));
+    border:1px solid color-mix(in srgb, var(--accent) 45%, var(--line));
+    color:color-mix(in srgb, var(--accent) 60%, var(--text)); border-radius:999px; padding:3px 12px; }
+
+  footer { margin-top:24px; color:var(--dim); font-size:12px; text-align:center; }
+
+  /* 모달/오버레이 (공통) */
+  .overlay { position:fixed; inset:0; z-index:60; background:#0008; display:flex; align-items:center; justify-content:center; }
+  .modal { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:18px; width:300px; }
+  .modal h3 { margin:0 0 12px; font-size:15px; }
+  .hint { font-size:11.5px; color:var(--dim); margin:6px 0 0; }
+  .dropzone { border:2px dashed var(--line); border-radius:12px; padding:30px 12px;
+    text-align:center; color:var(--dim); font-size:13px; cursor:pointer; transition:.15s; }
+  .dropzone.over { border-color:var(--accent); color:var(--text);
+    background:color-mix(in srgb, var(--accent) 10%, transparent); }
+  .mbtns { display:flex; gap:8px; justify-content:flex-end; margin-top:14px; }
+  .mbtns button { background:var(--panel2); color:var(--text); border:1px solid var(--line);
+    border-radius:8px; padding:6px 14px; font-size:13px; cursor:pointer; font-family:inherit; }
+  .mbtns button.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+  .mbtns button.danger { background:#a84848; border-color:#a84848; color:#fff; }
+  .pwwrap { position:relative; }
+  .pwwrap input { width:100%; background:var(--panel2); border:1px solid var(--line); border-radius:8px;
+    color:var(--text); padding:7px 36px 7px 10px; font-size:13px; font-family:inherit; }
+  .eyebtn { position:absolute; right:4px; top:50%; transform:translateY(-50%); background:none;
+    border:none; color:var(--dim); cursor:pointer; padding:4px; display:flex; }
+  .eyebtn:hover { color:var(--text); }
+
+  /* 상단 전역 메뉴 */
+  .topnav { display:flex; gap:6px; align-items:center; padding:2px 2px 0; margin-bottom:6px; padding-bottom:9px;
+    border-bottom:1px solid var(--line); }
+  .navid { display:flex; align-items:center; gap:7px; font-size:13.5px; font-weight:800;
+    letter-spacing:-.3px; margin-right:10px; padding:2px 2px; }
+  .navgear { margin-left:auto; display:flex; padding:6px !important; border-radius:8px !important; }
+  .topnav a, .topnav span.nv { padding:5px 14px; border-radius:999px; font-size:12.5px;
+    color:var(--dim); text-decoration:none; border:1px solid transparent; transition:.12s; }
+  .topnav a:hover { color:var(--text); border-color:var(--line); }
+  .topnav .on { background:color-mix(in srgb, var(--accent) 16%, var(--panel2));
+    border:1px solid color-mix(in srgb, var(--accent) 45%, var(--line));
+    color:var(--text); font-weight:600; }
+  .topnav .memo { opacity:.55; cursor:help; }
+</style><style>/* crit-nofocus */ *:focus, *:focus-visible { outline: none !important; box-shadow: none; }</style><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"><!-- crit-font --><style>/* crit-scrollbar: 얇은 테마 스크롤바 (화살표 버튼 제거) */
+* { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--accent) 30%, var(--line)) transparent; }
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--accent) 28%, var(--line)); border-radius: 999px; }
+*::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--accent) 48%, var(--line)); }
+*::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+*::-webkit-scrollbar-corner { background: transparent; }
+</style><style>/* crit-no-themebtn: 전역 테마 페이지는 개별 테마 버튼 불필요 */ .toolbar .settings { display: none !important; }</style><style>/* crit-linkbtn-tone: 링크 버튼 글씨를 포인트 컬러 조화 톤으로 */ .linkbtn { color: color-mix(in srgb, var(--accent) 52%, var(--text)) !important; } .linkbtn svg { color: color-mix(in srgb, var(--accent) 45%, var(--dim)) !important; }</style><style>/* crit-badd-square: 뱃지 추가 입력란은 인풋 느낌의 라운디드 스퀘어로 */ .badd input { border-radius: 8px !important; } .badd button { border-radius: 8px !important; }</style><style>/* crit-nav-accent: 활성 탭·닉네임 포인트 컬러 톤 */
+html:not(.crit-embedded) .topnav .on { background: color-mix(in srgb, var(--accent) 26%, var(--panel2)) !important;
+  color: color-mix(in srgb, var(--accent) 60%, var(--text)) !important;
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--line)) !important; }
+html:not(.crit-embedded) .navid { color: color-mix(in srgb, var(--accent) 55%, var(--text)); }
+</style><style>/* crit-nav-preheight */ html:not(.crit-embedded) .topnav { height: 54px; box-sizing: border-box; overflow: hidden; padding-top: 0 !important; padding-bottom: 0 !important; align-items: center !important; } html:not(.crit-embedded) .navid { line-height: 1 !important; } html:not(.crit-embedded) .topnav a { line-height: 1 !important; }</style><style>.toolbar, .catbar, .ctl, .fadd, .fdel, #previewbtn, .gdel, .sdel, .srsz, .srot, .bctrl, .bph, .pimg .ph, .gadd, .sadd, .addbtn, .tagadd, .exaddbtn, .imgaddbtn, .pdel, .composer, .del, .tag .x, .badge .x, .teditbtn, .gologbtn, .newbtn, #trashbtn, select { display: none !important; } button:not(.linkbtn):not(.critkeep) { display: none !important; } input, textarea { pointer-events: none !important; } .sbox input, .msearch input { pointer-events: auto !important; } .mbtnrow { display: none !important; } .crit-mdview { display: block !important; } .topnav { border-bottom: none !important; flex: none !important; } #critscroll { scrollbar-gutter: stable; overflow-x: clip; } .dayview { position: static !important; top: auto !important; } .crit-pub-range { display:inline-block; width:100%; height:6px; background:var(--panel2); border-radius:999px; position:relative; } .crit-pub-range i { position:absolute; top:50%; width:14px; height:14px; border-radius:50%; background:var(--accent); border:2.5px solid color-mix(in srgb, var(--accent) 25%, var(--panel)); transform:translate(-50%,-50%); box-sizing:border-box; }</style></head>
+<body class="light preview" data-intro="{&quot;header&quot;:null,&quot;headerBg&quot;:null,&quot;stickers&quot;:[],&quot;image&quot;:null,&quot;position&quot;:&quot;양쪽&quot;,&quot;systems&quot;:[&quot;CoC&quot;,&quot;inSANe&quot;],&quot;genres&quot;:[&quot;도파민싹도는장르면뭐든&quot;],&quot;badGenres&quot;:[&quot;고어(못보는건아니고 메인소재로는 별로)&quot;],&quot;likes&quot;:[],&quot;mines&quot;:[],&quot;badgeRows&quot;:[],&quot;etc&quot;:[],&quot;links&quot;:[{&quot;label&quot;:&quot;123&quot;,&quot;url&quot;:&quot;https://w00j00working.github.io/crit/jagwan_gg1785139906762_pp1785144838053.html&quot;},{&quot;label&quot;:&quot;&quot;,&quot;url&quot;:&quot;&quot;}]}"><nav class="topnav">
+    <span class="navid">우주</span>
+  
+  
+  
+  
+    
+  
+  
+  <a href="intro.html" class="on" onclick="event.preventDefault();location.href='intro.html?_r='+Date.now();">소개</a><a href="schedule.html" onclick="event.preventDefault();location.href='schedule.html?_r='+Date.now();">일정</a><a href="logs.html" onclick="event.preventDefault();location.href='logs.html?_r='+Date.now();">로그</a><a href="jagwan.html" onclick="event.preventDefault();location.href='jagwan.html?_r='+Date.now();">자관</a><a href="threads.html" onclick="event.preventDefault();location.href='threads.html?_r='+Date.now();">타래</a><a href="memo.html" onclick="event.preventDefault();location.href='memo.html?_r='+Date.now();">메모</a></nav><!-- crit-theme-early: 저장된 다크/라이트·포인트컬러를 첫 페인트 전에 적용해 기본값이 잠깐 보이는 깜빡임을 없앰 -->
+
+<div class="wrap crit-fixedbar"><div class="toolbar">
+    <span class="ttl"></span>
+    <button id="stkmodebtn" title="스티커를 추가/이동/편집하는 모드">스티커 모드</button><button id="stickerbtn" title="이미지를 올려 헤더 위 원하는 위치에 붙이기" style="display: none;">스티커 추가</button><button id="stickerlistbtn" title="스티커 썸네일 목록으로 순서·삭제 관리" style="display: none;">스티커 리스트</button><button id="prevbtn" title="게시본 모습으로 미리보기">미리보기</button>
+    <button id="savebtn" title="변경 내용을 게시본에 반영 (GitHub 저장소 업데이트)">업데이트</button>
+    <div class="settings">
+      <button id="setbtn">테마</button>
+      
+    </div>
+  </div></div><div id="critscroll"><div class="wrap">
+  
+  
+
+  <!-- 프로필 -->
+  <div class="card">
+    <div class="banner noimg" id="banner">
+      <span class="bph" id="bph">헤더 이미지</span>
+      <div class="bctrl">
+        <button id="bimgbtn" title="헤더 이미지 업로드/삭제">헤더 이미지</button>
+        
+        
+      </div>
+    </div>
+    <div class="profile">
+      <div class="pimg" id="pimg" title="클릭해서 대표 이미지 업로드"><span class="ph">이미지<br>업로드</span></div>
+      <div class="pmain">
+        <input class="nick" id="f-nick" value="우주" placeholder="닉네임" data-crit-i="4" readonly="" tabindex="-1">
+        <textarea class="tagline" id="f-tagline" rows="1" placeholder="소개 문구 (여러 줄 가능)" data-crit-i="5" style="height: 22px;" readonly=""></textarea>
+        <div class="meta">
+          <span class="mitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg><input id="f-hours" value="" placeholder="활동 시간대" data-crit-i="6" readonly="" tabindex="-1"></span>
+          <span class="mitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.6 8.6 0 0 1-3.5-.7L3 21l1.8-4.3A8.4 8.4 0 0 1 3 11.5a8.4 8.4 0 0 1 9-8.4 8.4 8.4 0 0 1 9 8.4Z"></path></svg><input id="f-contact" value="" placeholder="연락처(디스코드 등)" data-crit-i="7" readonly="" tabindex="-1"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 메인 소개 -->
+  <div class="card">
+    <h2>메인</h2>
+    <textarea class="mainintro" id="f-main" rows="3" placeholder="자유롭게 긴 소개를 적어보세요. 여러 줄과 문단을 그대로 유지합니다." data-md="1" data-crit-i="8" style="height: 73px;" readonly="">저... 할말이 많이 없네요...
+</textarea><div class="crit-mdview"><p>저... 할말이 많이 없네요...</p><div style="height:1.8em"></div></div>
+  </div>
+
+  <!-- 성향표 -->
+  <div class="card">
+    <h2>성향표</h2>
+    <div class="srow" style="margin-bottom:14px"><span style="font-size:13px">선호 역할</span>
+      <span style="display: inline-flex; align-items: center; background: color-mix(in srgb, var(--accent) 18%, var(--panel2)); border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--line)); color: color-mix(in srgb, var(--accent) 60%, var(--text)); border-radius: 999px; padding: 3px 12px; font-size: 12px; font-weight: 700;">GM/PL</span>
+    </div>
+    <div style="font-size:13px; margin-bottom:6px">선호 룰</div>
+    <div class="tagrow" id="tags-system"><span class="tag">CoC<span class="x" title="삭제">×</span></span><span class="tag">inSANe<span class="x" title="삭제">×</span></span></div>
+    <div class="tagadd" data-for="system"><input data-crit-i="9" value="" readonly="" tabindex="-1"><button>추가</button></div>
+
+    <div style="font-size:13px; margin:16px 0 6px">선호 장르</div>
+    <div class="tagrow" id="genres"><span class="tag">도파민싹도는장르면뭐든<span class="x" title="삭제">×</span></span></div>
+    <div class="tagadd" data-for="genre"><input data-crit-i="10" value="" readonly="" tabindex="-1"><button>추가</button></div>
+
+    <div style="font-size:13px; margin:16px 0 6px">비선호 장르</div>
+    <div class="tagrow" id="badgenres"><span class="tag mine">고어(못보는건아니고 메인소재로는 별로)<span class="x" title="삭제">×</span></span></div>
+    <div class="tagadd" data-for="badgenre"><input data-crit-i="11" value="" readonly="" tabindex="-1"><button>추가</button></div>
+
+    <div style="margin-top:18px">
+      <div class="gauge">
+        <div class="glabels"><span>단문</span><b>롤플 스타일</b><span style="color: color-mix(in srgb, var(--accent) 55%, var(--dim)); font-weight: 700;">장문</span></div>
+        <span class="crit-pub-range"><i style="left:66%"></i></span>
+      </div>
+      <div class="gauge">
+        <div class="glabels"><span style="color: color-mix(in srgb, var(--accent) 55%, var(--dim)); font-weight: 700;">RP 성향</span><b>성향</b><span>G 성향</span></div>
+        <span class="crit-pub-range"><i style="left:14.000000000000002%"></i></span>
+      </div>
+      <div class="gauge">
+        <div class="glabels"><span>세션만</span><b>사담 비중</b><span style="color: color-mix(in srgb, var(--accent) 55%, var(--dim)); font-weight: 700;">사담 많이</span></div>
+        <span class="crit-pub-range"><i style="left:68%"></i></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 뱃지 -->
+  <div class="card">
+    <h2>참고</h2>
+    <div id="badgerows"></div>
+    <button class="addbtn" id="addbadgerow">+ 줄 추가</button>
+  </div>
+
+  <!-- 선호 / 지뢰 -->
+  <div class="card">
+    <h2>선호</h2>
+    <div class="tagrow" id="tags-like"></div>
+    <div class="tagadd" data-for="like"><input data-crit-i="15" value="" readonly="" tabindex="-1"><button>추가</button></div>
+  </div>
+  <div class="card">
+    <h2>지뢰</h2>
+    <div class="tagrow" id="tags-mine"></div>
+    <div class="tagadd" data-for="mine"><input data-crit-i="16" value="" readonly="" tabindex="-1"><button>추가</button></div>
+  </div>
+
+  <!-- 기타 (자유 항목 — 한 줄로 시작, 엔터로 여러 줄) -->
+  <div class="card">
+    <h2>기타</h2>
+    <div id="etcs"></div>
+    <button class="addbtn" id="addetc">+ 항목 추가</button>
+  </div>
+
+  <!-- 링크 (선택) -->
+  <div class="card">
+    <h2>링크</h2>
+    <div id="linkrows"><div class="crow"><input class="ck" value="123" placeholder="버튼 이름" data-crit-i="17" readonly="" tabindex="-1">
+      <input class="cv" value="https://w00j00working.github.io/crit/jagwan_gg1785139906762_pp1785144838053.html" placeholder="URL (https://…)" data-crit-i="18" readonly="" tabindex="-1">
+      <button class="del" title="삭제"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18"></path><path d="M8 6V4h8v2"></path><path d="M19 6l-1 14H6L5 6"></path></svg></button></div><div class="crow"><input class="ck" value="" placeholder="버튼 이름" data-crit-i="19" readonly="" tabindex="-1">
+      <input class="cv" value="" placeholder="URL (https://…)" data-crit-i="20" readonly="" tabindex="-1">
+      <button class="del" title="삭제"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18"></path><path d="M8 6V4h8v2"></path><path d="M19 6l-1 14H6L5 6"></path></svg></button></div></div>
+    <button class="addbtn" id="addlink">+ 링크 추가</button>
+    <div class="linkbtns" id="linkbtns"><a class="linkbtn" href="https://w00j00working.github.io/crit/jagwan_gg1785139906762_pp1785144838053.html" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"></path><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"></path></svg>123</a></div>
+  </div>
+</div></div>
+<input type="file" id="filepick" accept="image/*" style="display:none" data-crit-i="21" value="" readonly="" tabindex="-1">
+
+
+<!-- Crit 앱 임베드용: 다른 페이지의 iframe 안에서 열릴 때는 자체 전역 메뉴를 숨깁니다 -->
+<style>html.crit-embedded .topnav { display: none !important; }</style>
+
+
+<!-- crit-sticker-tools: 스티커 우클릭 순서 메뉴 + 스티커 리스트 관리 모달 -->
+<style>
+  .stkmenu { position:fixed; z-index:80; background:var(--panel); border:1px solid var(--line);
+    border-radius:10px; padding:4px; min-width:120px; box-shadow:0 10px 30px #0006; }
+  .stkmenu button { display:flex; width:100%; align-items:center; gap:7px; background:none; border:none;
+    color:var(--text); font-size:12.5px; padding:7px 10px; border-radius:7px; cursor:pointer; font-family:inherit; text-align:left; }
+  .stkmenu button:hover { background:color-mix(in srgb, var(--accent) 14%, var(--panel2)); }
+  .stklist { display:flex; flex-direction:column; gap:8px; max-height:340px; overflow-y:auto; margin-top:10px; }
+  .stkrow { display:flex; align-items:center; gap:10px; background:var(--panel2); border:1px solid var(--line);
+    border-radius:10px; padding:8px 10px; }
+  .stkrow img { width:44px; height:44px; object-fit:contain; border-radius:8px;
+    background:color-mix(in srgb, var(--accent) 8%, transparent); flex:none; }
+  .stkrow .stkname { flex:1; font-size:12.5px; color:var(--dim); }
+  .stkrow button { background:var(--panel); color:var(--dim); border:1px solid var(--line);
+    border-radius:7px; padding:4px 9px; font-size:12px; cursor:pointer; font-family:inherit; }
+  .stkrow button:hover { color:var(--text); border-color:var(--accent); }
+  .stkrow button.danger { color:#e08b8b; }
+  .stkempty { text-align:center; color:var(--dim); font-size:12.5px; padding:24px 0; }
+</style>
+
+
+<!-- Crit: 상단 전역 메뉴 통일 - 페이지별 콘텐츠 폭(.wrap max-width)과 무관하게 항상 창 전체 폭의
+     고정 헤더로 표시해, 페이지를 오갈 때 메뉴 크기/위치가 변하지 않게 합니다 -->
+<style>
+  html:not(.crit-embedded) .topnav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+    background: var(--bg);
+    padding: 12px 20px 10px !important;
+    margin: 0 !important;
+  }
+  html:not(.crit-embedded) .wrap { padding-top: 58px !important; }
+  /* 모바일 폭에서는 닉네임 배지를 빼고 메뉴 간격/패딩을 줄여서, 항목이 두 줄로 줄바꿈되며
+     깨져 보이던 문제(실제로 겪음)를 없앤다 - 메뉴 개수가 늘어도 한 줄에 들어가게 */
+  @media (max-width: 760px) {
+    html:not(.crit-embedded) .navid { display: none !important; }
+    html:not(.crit-embedded) .topnav { gap: 2px !important; padding: 10px 10px 8px !important; }
+    html:not(.crit-embedded) .topnav a { padding: 4px 8px !important; font-size: 12px !important; }
+  }
+</style>
+
+<!-- Crit: 전역 테마 동기화 - 포인트 컬러/다크·라이트를 모든 화면이 공유합니다.
+     (자관/로그 페이지는 전역 값을 기본값으로만 받고, 그 안의 테마 변경은 해당 페이지에만 적용) -->
+
+
+
+<!-- crit-nav-apply: 환경설정(crit-settings)의 닉네임/아바타/메뉴 순서를 상단 메뉴에 반영 + 메뉴 글씨 확대 -->
+<style>
+  html:not(.crit-embedded) .topnav a { font-size: 14px !important; padding: 4px 15px !important; }
+  html:not(.crit-embedded) .navid { font-size: 15.5px !important; gap: 8px; }
+  .topnav .nava { width: 30px; height: 30px; border-radius: 9px; background-size: cover;
+    background-position: center; display: inline-block; vertical-align: middle; flex: none; }
+</style>
+
+
+<!-- crit-publish: 업데이트 버튼 = 게시본 설정대로 전체 게시 -->
+
+<!-- crit-global-publish: 게시본 설정(순서/배포 체크)대로 모든 페이지를 스냅샷해 한 번에 게시 -->
+
+<!-- crit-scroll-layout: 세로 스크롤이 상단 메뉴를 제외한 아래 영역에만 생기도록 재배치.
+     app-shell.html에 감싸인 경우(crit-shell-real)도 진짜 독립 실행과 동일하게 취급한다 -
+     게시 스냅샷/미리보기(crit-embedded만 있고 crit-shell-real은 없음)만 예전의 좁은 레이아웃 유지 -->
+<style>
+  html:not(.crit-embedded) body, html.crit-shell-real body { overflow: hidden; height: 100vh; margin: 0; padding: 0 !important;
+    display: flex; flex-direction: column; }
+  html:not(.crit-embedded) body > .topnav, html.crit-shell-real body > .topnav { position: static !important; flex: none; background: var(--bg);
+    height: 54px; box-sizing: border-box; align-items: center; flex-wrap: nowrap; overflow: hidden;
+    padding: 12px 20px 10px !important; margin: 0 !important; }
+  html:not(.crit-embedded) #critscroll, html.crit-shell-real #critscroll { flex: 1 1 auto; overflow-y: auto; min-height: 0; }
+  html:not(.crit-embedded) #critscroll > .wrap, html.crit-shell-real #critscroll > .wrap { padding-top: 6px !important; margin-top: 0 !important; }
+  html:not(.crit-embedded) .crit-fixedbar, html.crit-shell-real .crit-fixedbar { flex: none !important; display: block !important;
+    height: auto !important; min-height: 0 !important; overflow: visible;
+    padding-top: 2px !important; padding-bottom: 2px !important; margin-top: 0 !important; margin-bottom: 0 !important; }
+  html:not(.crit-embedded) .crit-fixedbar .toolbar, html.crit-shell-real .crit-fixedbar .toolbar { margin-top: 0 !important; margin-bottom: 0 !important;
+    padding-right: 22px !important; padding-left: 32px !important; }
+  /* 이전 페이지 버튼은 항상 왼쪽에 */
+  html:not(.crit-embedded) .crit-fixedbar .toolbar #backbtn, html.crit-shell-real .crit-fixedbar .toolbar #backbtn { justify-self: start; margin-right: auto; }
+  html:not(.crit-embedded) .crit-fixedbar .toolbar .tleft, html.crit-shell-real .crit-fixedbar .toolbar .tleft { justify-content: flex-start; }
+</style>
+
+<!-- crit-onboarding: 설치 후 최초 실행 시 기본 설정(닉네임/아바타/테마/위젯/타래 아바타) -->
+
+<!-- crit-sticker-quiet: 스티커 바깥을 클릭하면 선택(핸들) 해제 -->
+
+<!-- crit-modal-dragguard: 모달 안에서 드래그를 시작해 바깥에서 놓아도 모달이 닫히지 않게 (전체 모달 공통) -->
+
+<!-- crit-crop: 공용 이미지 자르기 모달 - 비율 고정, 드래그 이동, 확대 슬라이더 -->
+
+<!-- crit-md-main: 메인 카드 마크다운 지원 - 미리보기/게시본에서 렌더링 -->
+<style>
+  .crit-mdview { display: none; font-size: 13.5px; line-height: 1.8; word-break: break-word; color: var(--desc);
+    border-left: 3px solid color-mix(in srgb, var(--accent) 30%, var(--line)); padding-left: 12px; }
+  body.preview #f-main { display: none; }
+  body.preview .crit-mdview { display: block; }
+  .crit-mdview h1, .crit-mdview h2, .crit-mdview h3 { margin: 0; letter-spacing: -.3px; }
+  .crit-mdview h1 { font-size: 17px; } .crit-mdview h2 { font-size: 15.5px; } .crit-mdview h3 { font-size: 14px; }
+  .crit-mdview strong { color: color-mix(in srgb, var(--accent) 55%, var(--text)); }
+  .crit-mdview code { background: var(--panel2); border: 1px solid var(--line); border-radius: 5px;
+    padding: 1px 6px; font-family: ui-monospace, Consolas, monospace; font-size: 12px; }
+  .crit-mdview blockquote { margin: 0; padding: 2px 12px; border-left: 3px solid var(--accent);
+    color: var(--dim); }
+  .crit-mdview ul { margin: 0; padding-left: 20px; }
+  .crit-mdview hr { border: none; border-top: 1px solid var(--line); margin: 12px 0; }
+  .crit-mdview p { margin: 0; }
+</style>
+
+<!-- crit-crow-preview: 기타란 - 미리보기/게시본에서 내용은 배경 없이 글자만, 항목명 박스와 구분 -->
+<style>
+  body.preview .crow { align-items: flex-start; }
+  body.preview .crow .cv { background: none !important; border-color: transparent !important;
+    padding-left: 2px; color: color-mix(in srgb, var(--accent) 30%, var(--dim)); }
+  body.preview .crow .ck { color: color-mix(in srgb, var(--accent) 30%, var(--dim)); }
+</style>
+<!-- crit-gauge-tone: 게이지 타이틀은 섹션 라벨처럼 연하게, 강조 라벨은 채도만 살짝 -->
+<style>
+  .glabels b { color: var(--dim) !important; font-weight: 700; }
+</style>
+<!-- crit-fresh-intro: 신규 시작이면 데모 데이터를 비운다 -->
+
+<!-- crit-ob-livetheme: 온보딩에서 테마/포인트컬러 변경 즉시 화면에 반영 -->
+
+<!-- crit-hex-any: 모달의 컬러픽커 옆에 hex 직접 입력칸 자동 추가 -->
+
+<style>/* crit-sticker-clip(v2): 스티커는 헤더/카드 밖으로 자유롭게 나가되,
+   상단 툴바(미리보기·업데이트 줄)만 스티커 위에 있어 침범해 보이지 않게 */
+.toolbar { z-index: 5 !important; }
+</style>
+<!-- crit-intro-persist: 소개 페이지 실제 저장/복원 (intro 객체 + 입력칸 + 스티커 이동) -->
+
+<!-- crit-close-modal: X 버튼 → 트레이 최소화/완전 종료 선택 (기억하기) -->
+
+<!-- crit-fancy-all: 앱의 모든 셀렉트를 테마 드롭다운으로 (동적 생성/표시 전환 포함) -->
+<style>
+  .fwrap { position: relative; flex: 1; display: flex; min-width: 0; }
+  .fwrap .fsel { flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; padding: 8px 11px;
+    color: var(--text); font-size: 13px; font-family: inherit; cursor: pointer; text-align: left; min-width: 0; }
+  .fwrap .fsel { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .fwrap .fsel::after { content: "▾"; font-size: 10px; color: var(--dim); flex: none; }
+  .fwrap .fsel:hover, .fwrap .fsel.open { border-color: color-mix(in srgb, var(--accent) 55%, var(--line)); }
+  .fwrap .fmenu { position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 80;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 4px;
+    box-shadow: 0 10px 30px #0007; max-height: 240px; overflow-y: auto; }
+  .fwrap .fitem { padding: 7px 11px; border-radius: 7px; font-size: 13px; color: var(--text); cursor: pointer;
+    display: flex; align-items: center; gap: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .fwrap .fitem:hover { background: color-mix(in srgb, var(--accent) 20%, var(--panel2)); }
+  .fwrap .fitem.on { color: color-mix(in srgb, var(--accent) 65%, var(--text)); font-weight: 700; }
+  .fwrap .fdot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+</style>
+
+<!-- crit-extlink: 외부 링크는 항상 기본 브라우저로 (프로토콜 없는 주소 보정 포함) -->
+
+<style>/* crit-toolbar-fullbleed: 고정 툴바 배경을 화면 전체 폭으로 (스티커가 지나가도 끊겨 보이지 않게) */
+/* crit-nohscroll: 50vw 계산이 스크롤바 폭을 무시해 생기는 가로 스크롤 차단 */
+html:not(.crit-embedded), html:not(.crit-embedded) body, html.crit-shell-real, html.crit-shell-real body { overflow-x: clip !important; }
+html:not(.crit-embedded) .toolbar, html.crit-shell-real .toolbar {
+  margin-left: calc(50% - 50vw) !important;
+  margin-right: calc(50% - 50vw) !important;
+  padding-left: calc(50vw - 50%) !important;
+  padding-right: calc(50vw - 50%) !important;
+}
+</style>
+<style>/* crit-glabels-center: 게이지 제목을 좌우 문구 길이와 무관하게 정중앙 고정 */
+.glabels { display: grid !important; grid-template-columns: 1fr auto 1fr; align-items: baseline; gap: 8px; }
+.glabels span:first-child { text-align: left; }
+.glabels span:last-child { text-align: right; }
+.glabels b { text-align: center; }
+</style>
+<style>/* crit-hscrollbar-kill: 어떤 경우에도 문서 가로 스크롤바가 보이지 않게 (내부 컴포넌트 스크롤은 유지) */
+html:not(.crit-embedded)::-webkit-scrollbar:horizontal, html.crit-shell-real::-webkit-scrollbar:horizontal,
+html:not(.crit-embedded) body::-webkit-scrollbar:horizontal, html.crit-shell-real body::-webkit-scrollbar:horizontal { display: none; height: 0; }
+#critscroll { overflow-x: clip !important; }
+</style>
+<!-- crit-gauge-lean: 게이지가 가운데(±5)보다 쏠리면 그쪽 라벨을 포인트컬러+볼드로 (인라인 스타일이라 게시본에도 반영) -->
+
+<style>/* crit-etc-tone: 기타·링크의 항목명/값 글자를 플레이스홀더(항목명/내용)와 같은 포인트컬러 톤으로 통일
+   - 입력 중에도, 미리보기에도, 게시본에도 동일하게 보인다 */
+.crow .ck, .crow .cv { color: color-mix(in srgb, var(--accent) 30%, var(--dim)); }
+</style>
+<!-- crit-sticker-fixedsize: 창을 줄여도 스티커 크기 유지 (배너 % 대신 px 고정) -->
+
+<!-- crit-intro-stkmode: 소개 스티커 모드 - 켰을 때만 이동/추가/리스트 가능, 해제하면 위치·크기·각도 확정 저장 -->
+<style>
+  body:not(.stkediting) .sticker { pointer-events: none !important; }
+  #stkmodebtn.on { color: var(--text); border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 18%, var(--panel2)); }
+</style>
+
+<script>(function(){function show(list,idx){var ov=document.createElement("div");ov.style.cssText="position:fixed;inset:0;z-index:99999;background:#000c;display:flex;align-items:center;justify-content:center;cursor:zoom-out";var img=document.createElement("img");img.style.cssText="max-width:86vw;max-height:88vh;border-radius:10px";var navs=[];function pos(){var r=img.getBoundingClientRect();if(r.width<10)return;navs.forEach(function(nb){nb.el.style.width=Math.max(6,nb.dir<0?r.left:(innerWidth-r.right))+"px";});}function render(){img.src=list[idx];}img.addEventListener("load",pos);window.addEventListener("resize",pos);render();img.addEventListener("click",function(e){e.stopPropagation()});ov.appendChild(img);if(list.length>1){[[-1,"M15 18l-6-6 6-6"],[1,"M9 6l6 6-6 6"]].forEach(function(cf){var b=document.createElement("button");b.className="critkeep";b.innerHTML='<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="'+cf[1]+'"/></svg>';b.style.cssText="position:fixed;top:25%;bottom:25%;"+(cf[0]<0?"left:0":"right:0")+";display:flex;align-items:center;justify-content:center;background:transparent;border:none;color:#f0edf3;cursor:pointer;z-index:2;transition:background .12s";b.addEventListener("click",function(e){e.stopPropagation();idx=(idx+cf[0]+list.length)%list.length;render();});navs.push({dir:cf[0],el:b});ov.appendChild(b);});requestAnimationFrame(pos);}ov.addEventListener("click",function(e){if(e.target===img)return;ov.remove()});document.body.appendChild(ov);}function bgUrl(el){var bg=getComputedStyle(el).backgroundImage;if(!bg||bg.indexOf("url(")!==0)return null;var u=bg.slice(4,-1);var q=u.charAt(0);if(q===String.fromCharCode(34)||q===String.fromCharCode(39))u=u.slice(1,-1);return u;}document.addEventListener("click",function(e){if(!e.target.closest)return;var g=e.target.closest(".gitem:not(.gadd)");if(g){var gal=g.closest(".gal")||g.parentNode;var all=Array.prototype.slice.call(gal.querySelectorAll(".gitem:not(.gadd)"));var list=all.map(bgUrl).filter(Boolean);var idx=Math.max(0,all.indexOf(g));if(list.length){show(list,Math.min(idx,list.length-1));return;}}var pg=e.target.closest(".pimgs .pimg");if(pg){var pw=pg.closest(".pimgs");var pall=Array.prototype.slice.call(pw.querySelectorAll(".pimg"));var plist=pall.map(bgUrl).filter(Boolean);if(plist.length){show(plist,Math.max(0,pall.indexOf(pg)));return;}}var im=e.target.closest(".pimgs img, .ptxt img, .btext img, .mcontent img, .pv-text img");if(im&&im.src)show([im.src],0);});})();(function(){document.querySelectorAll(".logrow").forEach(function(r){var a=r.querySelector(".llink");if(!a)return;r.style.cursor="pointer";r.addEventListener("click",function(){if(a.getAttribute("target")==="_blank")window.open(a.getAttribute("href"));else location.href=a.getAttribute("href");})});})();(function(){document.addEventListener("click",function(e){var sp=e.target.closest?e.target.closest(".post.spoiled"):null;if(!sp)return;e.preventDefault();e.stopPropagation();var ov=document.createElement("div");ov.style.cssText="position:fixed;inset:0;z-index:99998;background:#0008;display:flex;align-items:center;justify-content:center";var md=document.createElement("div");md.style.cssText="background:var(--panel,#1d1b21);border:1px solid var(--line,#34313a);border-radius:14px;padding:20px 22px;width:min(300px,86vw);color:var(--text,#f0edf3)";md.innerHTML="<div style=\"font-size:14px;font-weight:800;margin-bottom:8px\">스포일러</div><div style=\"color:var(--dim,#9a95a0);font-size:12.5px;line-height:1.7;margin-bottom:14px\">스포일러를 확인하시겠습니까?</div>";var row=document.createElement("div");row.style.cssText="display:flex;gap:8px;justify-content:flex-end";function mkB(t,pr){var b=document.createElement("button");b.textContent=t;b.className="critkeep";b.style.cssText="border-radius:8px;padding:6px 14px;font-size:13px;cursor:pointer;font-family:inherit;"+(pr?"background:var(--accent,#B26A9E);border:1px solid var(--accent,#B26A9E);color:#fff":"background:var(--panel2,#26242c);border:1px solid var(--line,#34313a);color:var(--text,#f0edf3)");row.appendChild(b);return b;}mkB("취소").addEventListener("click",function(){ov.remove()});mkB("확인",1).addEventListener("click",function(){sp.classList.remove("spoiled");ov.remove()});md.appendChild(row);ov.appendChild(md);ov.addEventListener("click",function(e2){if(e2.target===ov)ov.remove()});document.body.appendChild(ov);},true);})();(function(){var CRIT_BUILD_TS=1785945673310;setTimeout(function(){try{fetch(location.pathname,{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){var m=t.match(/CRIT_BUILD_TS ?= ?(\d+)/);if(!m)return;var latest=Number(m[1]);if(latest>CRIT_BUILD_TS&&sessionStorage.getItem("crit-seen-build")!==String(latest)){sessionStorage.setItem("crit-seen-build",String(latest));location.reload();}}).catch(function(){});}catch(e){}},1200);})();</script></body></html>

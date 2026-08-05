@@ -1,0 +1,1345 @@
+<!DOCTYPE html>
+<html lang="ko"><head><!-- crit-preview-early: 리더 모드를 첫 페인트 전에 적용해 수정 UI가 깜빡이지 않게 --><script>try{if((window.__CRIT_PREVIEW || new URLSearchParams(location.search).has("preview")))document.documentElement.classList.add("crit-preview")}catch(e){}</script><style>html.crit-preview .stats,html.crit-preview .bartitle,html.crit-preview .tabbar,html.crit-preview .charbar,html.crit-preview #pwbtn,html.crit-preview .chip-edit,html.crit-preview .allbtn,html.crit-preview #sessbtn,html.crit-preview #editbtn,html.crit-preview #savebtn,html.crit-preview #descbtn,html.crit-preview #chatbtn,html.crit-preview #msgrbtn{display:none!important}</style><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Crit — 자유백업</title>
+<style>
+  :root {
+    --accent:#B26A9E;
+    color-scheme: dark;
+    accent-color: var(--accent);
+    --bg:     color-mix(in srgb, var(--accent) 5%,  #131216);
+    --panel:  color-mix(in srgb, var(--accent) 8%, #1d1b21);
+    --panel2: color-mix(in srgb, var(--accent) 10%, #26242c);
+    --line:   color-mix(in srgb, var(--accent) 18%, #34313a);
+    --text:   color-mix(in srgb, var(--accent) 5%,  #f0edf3);
+    --dim:    color-mix(in srgb, var(--accent) 12%, #9a95a0);
+    --desc:   color-mix(in srgb, var(--accent) 12%, #d1cdd8);
+  }
+  body.light {
+    color-scheme: light;
+    --bg:     color-mix(in srgb, var(--accent) 3%,  #f7f6f8);
+    --panel:  color-mix(in srgb, var(--accent) 4%,  #ffffff);
+    --panel2: color-mix(in srgb, var(--accent) 5%,  #efedf1);
+    --line:   color-mix(in srgb, var(--accent) 13%, #d9d6dd);
+    --text:   color-mix(in srgb, var(--accent) 8%, #27242a);
+    --dim:    color-mix(in srgb, var(--accent) 9%, #6f6a76);
+    --desc:   color-mix(in srgb, var(--accent) 15%, #565060);
+  }
+  * { box-sizing:border-box; }
+  html { scrollbar-width:thin; scrollbar-color: color-mix(in srgb, var(--accent) 45%, var(--line)) transparent; }
+  ::-webkit-scrollbar { width:8px; height:8px; }
+  ::-webkit-scrollbar-track { background:transparent; }
+  ::-webkit-scrollbar-thumb { background:color-mix(in srgb, var(--accent) 45%, var(--line)); border-radius:8px; }
+  body { margin:0; background:var(--bg); color:var(--text);
+    font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif; line-height:1.65; }
+  .wrap { max-width:860px; margin:0 auto; padding:8px 16px 30px; display:flex; flex-direction:column; height:100vh; }
+
+  .toolbar { flex:none; display:flex; gap:8px; align-items:center;
+    padding:10px 2px; margin-bottom:14px; border-bottom:1px solid var(--line); }
+  .toolbar button { background:var(--panel2); color:var(--dim); border:1px solid var(--line);
+    border-radius:8px; padding:5px 11px; font-size:12.5px; cursor:pointer; font-family:inherit; }
+  .toolbar button:hover { color:var(--text); border-color:var(--accent); }
+  .toolbar button.on { color:var(--text); border-color:var(--accent); }
+  .iconbtn { display:flex; align-items:center; justify-content:center; padding:5px 9px; }
+  .iconbtn.on { color:var(--accent); border-color:var(--accent); }
+  .hint { font-size:12px; color:var(--dim); line-height:1.6; }
+  .pwwrap { position:relative; margin-bottom:14px; }
+  .pwwrap input { width:100%; box-sizing:border-box; background:var(--panel2); border:1px solid var(--line);
+    border-radius:9px; padding:9px 34px 9px 11px; color:var(--text); font-size:13.5px; font-family:inherit; outline:none; }
+  .eyebtn { position:absolute; right:4px; top:50%; transform:translateY(-50%); background:none;
+    border:none; color:var(--dim); cursor:pointer; padding:5px; display:flex; }
+  .eyebtn:hover { color:var(--text); }
+  .settings { position:relative; }
+  .spanel { display:none; position:absolute; right:0; top:36px; z-index:20; width:270px;
+    background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px;
+    box-shadow:0 10px 30px #0008; }
+  .spanel.open { display:block; }
+  .spanel h4 { margin:0 0 8px; font-size:12.5px; color:var(--dim); font-weight:600; }
+  .srow { display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:13px; margin-bottom:8px; }
+  .srow input[type=color] { width:34px; height:24px; border:none; background:none; padding:0; cursor:pointer; }
+  .srow label { display:flex; align-items:center; gap:4px; font-size:12.5px; color:var(--dim); cursor:pointer; }
+  .cwrap { display:flex; align-items:center; gap:6px; }
+  .hexin { width:74px; background:var(--panel2); border:1px solid var(--line); border-radius:6px;
+    color:var(--text); font-size:12px; padding:4px 6px; font-family:Consolas,"D2Coding",monospace; }
+  input[type=radio] { appearance:none; -webkit-appearance:none; width:15px; height:15px; flex:none;
+    border:1.5px solid var(--line); background:var(--panel2); cursor:pointer;
+    margin:0 3px 0 0; vertical-align:-2px; transition:.12s; border-radius:50%; }
+  input[type=radio]:checked { background:var(--accent); border-color:var(--accent);
+    box-shadow:inset 0 0 0 3px var(--panel); }
+  input[type=checkbox] { appearance:none; -webkit-appearance:none; width:15px; height:15px; flex:none;
+    border:1.5px solid color-mix(in srgb, var(--accent) 45%, var(--line));
+    background:color-mix(in srgb, var(--accent) 8%, var(--panel2)); cursor:pointer;
+    margin:0; vertical-align:-2px; transition:.12s; border-radius:4.5px; }
+  input[type=checkbox]:checked { background:var(--accent)
+    url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 7"/></svg>')
+    center/10px 10px no-repeat; border-color:var(--accent); }
+  input::placeholder, textarea::placeholder { color:color-mix(in srgb, var(--accent) 30%, var(--dim)); }
+
+  /* 시작 카드 */
+  .startcard { margin:auto; text-align:center; background:var(--panel); border:1px solid var(--line);
+    border-radius:16px; padding:36px 44px; }
+  .startcard p { color:var(--dim); font-size:13px; margin:0 0 18px; }
+  .bigbtn { background:var(--accent); color:#fff; border:none; border-radius:10px;
+    padding:10px 22px; font-size:13.5px; font-weight:600; cursor:pointer; font-family:inherit; }
+
+  /* 에디터 */
+  .editor { flex:1; min-height:0; display:none; flex-direction:column; }
+  .ltitlerow { flex:none; display:flex; align-items:center; gap:8px; padding-top:8px; }
+  .ltitle { flex:1 1 auto; min-width:0; background:none; border:none; color:var(--text); font-family:inherit;
+    font-size:17px; font-weight:800; letter-spacing:-.3px; outline:none; padding:0 2px 6px;
+    border-bottom:1.5px dashed transparent; }
+  .ltitle:hover, .ltitle:focus { border-bottom-color:color-mix(in srgb, var(--accent) 50%, var(--line)); }
+  /* 연결 뱃지 - 자관 연동 여부를 표시하면서 클릭하면 연동 창을 여는 작은 알약 버튼 */
+  #gwanlinkbtn { flex:none; background:var(--panel2); color:var(--dim); border:1px solid var(--line);
+    border-radius:999px; padding:4px 12px; font-size:11.5px; cursor:pointer; font-family:inherit;
+    margin-bottom:6px; text-decoration:none; display:inline-flex; align-items:center; }
+  #gwanlinkbtn:hover { color:var(--text); border-color:color-mix(in srgb, var(--accent) 50%, var(--line)); }
+  #gwanlinkbtn.on { background:color-mix(in srgb, var(--accent) 16%, var(--panel2));
+    border-color:var(--accent); color:var(--text); font-weight:600; }
+  .lgwan { flex:none; font-size:11.5px; color:var(--dim); padding:0 2px 10px; }
+  .lsub { background:none; border:none; color:var(--dim); font-family:inherit; font-size:11.5px;
+    outline:none; padding:0; width:220px; border-bottom:1.5px dashed transparent; }
+  .lsub:hover, .lsub:focus { border-bottom-color:color-mix(in srgb, var(--accent) 50%, var(--line)); }
+  .blocks { flex:1; overflow:auto; min-height:0; padding:6px 2px; border-top:1px solid var(--line); }
+  .blk { display:flex; gap:10px; padding:8px 10px; border-radius:12px; position:relative; margin-bottom:2px; }
+  /* 포인트 컬러가 노란/따뜻한 색일 때 호버만 색감이 붕 뜨는 느낌이 들어서, 호버는 포인트 컬러가
+     아니라 중립색(텍스트色 살짝)으로 - 어떤 테마 컬러여도 톤이 어긋나지 않는다 */
+  .blk:hover { background:color-mix(in srgb, var(--text) 6%, transparent); }
+  .bav { flex:none; width:30px; height:30px; border-radius:50%; margin-top:2px;
+    background-size:cover; background-position:center; border:1px solid var(--line); }
+  .bname { font-size:12.5px; font-weight:700; }
+  .btxt { font-size:13.5px; color:var(--desc); white-space:pre-wrap; }
+  .blk.desc { justify-content:center; text-align:center; padding:10px 40px; }
+  .blk.cont { margin-top:0; padding-top:2px; }
+  .blk.cont .bav { height:0; border:none; visibility:hidden; margin-top:0; }
+  .blk.desc .btxt { color:var(--dim); font-size:13px; font-style:italic; }
+  /* 같은 화자가 연속으로 말하면(연속 발언) Roll20/CCF 로그 뷰어처럼 블록들이 하나로
+     이어져 보이게: 다음이 이어지는 블록이면 내 아래 모서리를, 이어지는 블록 자신은
+     위 모서리를 각지게 만들어 둘 사이 이음매가 안 보이게 한다 (원래는 매 블록이 완전히
+     둥근 독립된 알약으로 따로따로 떨어져 있어서 로그가 지저분해 보였다) */
+  .blk:not(.desc):has(+ .blk.cont) { border-bottom-left-radius:0; border-bottom-right-radius:0; margin-bottom:0; }
+  .blk.cont { border-top-left-radius:0 !important; border-top-right-radius:0 !important; }
+  .bdel { position:absolute; top:6px; right:8px; display:none; width:18px; height:18px;
+    border-radius:50%; background:#a84848; color:#fff; border:none; font-size:11px; line-height:1;
+    cursor:pointer; align-items:center; justify-content:center; }
+  .blk:hover .bdel { display:flex; }
+  .bempty { color:var(--dim); font-size:12.5px; font-style:italic; text-align:center; padding:40px 0; }
+  /* 캐릭터 대사 블록은 메신저 여부와 상관없이 항상 배경이 들어간다 - 캐릭터마다 다른 색이 아니라
+     테마 포인트 컬러 기준 배경이라야 로그 전체 톤이 캐릭터 색상에 안 흔들리고 통일된다 */
+  .blk:not(.desc) { border-radius:12px; background:color-mix(in srgb, var(--accent) 9%, transparent); }
+  /* 메신저 스타일: 내 캐릭터 오른쪽에 두되(블록 위치), 롤플레이 내용 글자 자체는 이름/아바타와
+     달리 왼쪽 정렬로 - 메신저 껐을 때는 원래대로 카드가 항상 전체 폭을 채운다(맥시멈은 유지) */
+  body.msgr .blk:not(.desc) { max-width:74%; width:fit-content; margin-right:auto; }
+  body.msgr .blk.mine { flex-direction:row-reverse; margin-right:0; margin-left:auto; }
+  body.msgr .blk:not(.mine) > div { padding-right:5px; }
+  body.msgr .blk.mine > div { text-align:right; padding-left:10px; }
+  body.msgr .blk.mine .btxt { text-align:left; }
+  body.msgr .blk.mine .btxt.short { text-align:right; }
+  body.msgr .blk.mine .bdel { right:auto; left:8px; }
+  /* 모바일 폭에서는 74% 맥시멈 때문에 양쪽에 큰 여백이 남아 답답해 보인다 - 폭 자체는
+     꽉 채우고, 프로필/텍스트 정렬만으로 메신저 느낌을 내도록 좌우 여백을 없앤다 */
+  @media (max-width:760px) {
+    body.msgr .blk:not(.desc) { max-width:100%; width:auto; margin-right:0; }
+    body.msgr .blk.mine { margin-left:0; }
+  }
+  .minetag { flex:none; border-radius:999px; padding:0 6px; font-size:9.5px; font-weight:600;
+    background:color-mix(in srgb, var(--accent) 16%, var(--panel2));
+    border:1px solid color-mix(in srgb, var(--accent) 45%, var(--line)); color:var(--text); }
+
+  /* 화자 선택 + 입력 */
+  .composer { flex:none; border-top:1px solid var(--line); padding-top:10px; }
+  .chips { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px; }
+  .chip { display:flex; align-items:center; gap:6px; background:var(--panel2); color:var(--dim);
+    border:1px solid var(--line); border-radius:999px; padding:3px 11px 3px 4px; font-size:12.5px;
+    cursor:pointer; font-family:inherit; position:relative; }
+  .chip:hover { color:var(--text); border-color:color-mix(in srgb, var(--accent) 50%, var(--line)); }
+  .chip.on { background:color-mix(in srgb, var(--accent) 16%, var(--panel2));
+    border-color:var(--accent); color:var(--text); font-weight:600; }
+  .chip .cav { width:22px; height:22px; border-radius:50%; background-size:cover; background-position:center;
+    border:1px solid var(--line); }
+  .chip.descchip { padding:3px 13px; }
+  .chip .sealbtn { display:flex; background:none; border:none; color:currentColor; cursor:pointer; padding:0 0 0 2px; }
+  .sealpop { position:absolute; bottom:calc(100% + 8px); left:0; z-index:40; background:var(--panel);
+    border:1px solid var(--line); border-radius:12px; padding:10px; box-shadow:0 10px 26px rgba(0,0,0,.4);
+    display:flex; gap:8px; align-items:center; }
+  .sealpop .sopt { width:34px; height:34px; border-radius:50%; cursor:pointer; flex:none;
+    background-size:cover; background-position:center; border:2px solid var(--line); }
+  .sealpop .sopt.on { border-color:var(--accent); box-shadow:0 0 0 2px color-mix(in srgb, var(--accent) 40%, transparent); }
+  .sealpop .slabel { font-size:10.5px; color:var(--dim); flex:none; }
+  .inrow { display:flex; gap:8px; align-items:flex-end; }
+  .inta { flex:1; min-height:96px; max-height:200px; background:var(--panel2); color:var(--text);
+    border:1px solid var(--line); border-radius:10px; padding:8px 11px; font-size:13.5px;
+    font-family:inherit; resize:none; outline:none; line-height:1.6; }
+  .inta:focus { border-color:var(--accent); }
+  .sendbtn { flex:none; background:var(--accent); color:#fff; border:none; border-radius:10px;
+    padding:9px 18px; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; }
+  .inhint { font-size:10.5px; color:var(--dim); margin-top:4px; }
+
+  /* 모달 */
+  .overlay { position:fixed; inset:0; z-index:60; background:#0008; display:flex; align-items:center; justify-content:center; }
+  .modal { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:18px; width:360px; max-height:86vh; overflow:auto; }
+  .modal h3 { margin:0 0 12px; font-size:15px; }
+  .modal p { margin:0 0 14px; font-size:13.5px; }
+  .gsel { display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid var(--line);
+    border-radius:11px; cursor:pointer; margin-bottom:7px; transition:.12s; }
+  .gsel:hover { border-color:var(--accent); }
+  .gsel b { font-size:13.5px; }
+  .gsel span { font-size:11.5px; color:var(--dim); margin-left:auto; }
+  .gsel.none { border-style:dashed; color:var(--dim); }
+  .crow { display:flex; gap:10px; align-items:center; margin-bottom:9px; position:relative; }
+  .cavbtn { flex:none; width:34px; height:34px; border-radius:50%; cursor:pointer; padding:0;
+    border:1.5px dashed color-mix(in srgb, var(--accent) 50%, var(--line));
+    background-size:cover; background-position:center; }
+  .cavbtn:hover { border-color:var(--accent); border-style:solid; }
+  .avpop { position:absolute; left:0; top:calc(100% + 4px); z-index:70; display:flex; gap:5px;
+    background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:6px;
+    box-shadow:0 10px 26px rgba(0,0,0,.4); }
+  .avpop button { background:var(--panel2); color:var(--dim); border:1px solid var(--line);
+    border-radius:7px; padding:5px 11px; font-size:11.5px; cursor:pointer; font-family:inherit; white-space:nowrap; }
+  .avpop button:hover { color:var(--text); border-color:var(--accent); }
+  .crow input[type=text] { flex:1; min-width:0; background:var(--panel2); color:var(--text); border:1px solid var(--line);
+    border-radius:8px; padding:7px 10px; font-size:13px; font-family:inherit; outline:none; }
+  .crow input[type=text]:focus { border-color:var(--accent); }
+  .crow .mlab { flex:none; display:flex; align-items:center; gap:5px; font-size:11.5px;
+    color:var(--dim); cursor:pointer; }
+  .crow .xdel { flex:none; width:26px; height:26px; border-radius:7px; background:var(--panel2);
+    color:#e08a8a; border:1px solid var(--line); cursor:pointer; font-size:12px; line-height:1; }
+  .addrow { background:var(--panel2); border:1px dashed var(--line); border-radius:8px; width:100%;
+    color:var(--dim); font-family:inherit; font-size:12px; padding:7px; cursor:pointer; }
+  .addrow:hover { border-color:var(--accent); color:var(--text); }
+  .mbtns { display:flex; gap:8px; justify-content:flex-end; margin-top:14px; }
+  .mbtns button { background:var(--panel2); color:var(--text); border:1px solid var(--line);
+    border-radius:8px; padding:6px 14px; font-size:13px; cursor:pointer; font-family:inherit; }
+  .mbtns button.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+  .mbtns button.danger { background:#a84848; border-color:#a84848; color:#fff; }
+</style><style>/* crit-nofocus */ *:focus, *:focus-visible { outline: none !important; box-shadow: none; }</style><style>/* crit-modal-label: 모달 라벨이 세로로 꺾이지 않게 */ .modal .mrow > span:first-child { flex: none; white-space: nowrap; }</style><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"><!-- crit-font --><style>/* crit-scrollbar: 얇은 테마 스크롤바 (화살표 버튼 제거) */
+* { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--accent) 30%, var(--line)) transparent; }
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--accent) 28%, var(--line)); border-radius: 999px; }
+*::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--accent) 48%, var(--line)); }
+*::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+*::-webkit-scrollbar-corner { background: transparent; }
+</style></head>
+<body><!-- crit-theme-early --><script>(function(){try{
+    /* freelog.html은 자유백업 항목마다 재사용되는 공용 파일이라, 테마 키도 파일명 고정이 아니라
+       항목별 고유 키(__CRIT_KEY, ?fid=..)를 써야 한 항목의 테마 변경이 다른 항목까지 안 바뀐다 */
+    var __fid0 = new URLSearchParams(location.search).get('fid');
+    var __key0 = window.__CRIT_KEY || (__fid0 ? ('freelog.html?fid=' + __fid0) : location.pathname.split('/').pop());
+    var t = JSON.parse(localStorage.getItem('crit-page-theme:' + __key0));
+    if (t && t.mode === 'light') document.body.classList.add('light');
+    if (t && t.accent) document.documentElement.style.setProperty('--accent', t.accent);
+  }catch(e){}})();</script>
+<div class="wrap">
+  <div class="toolbar">
+    <span style="flex:1 1 auto"></span>
+    <button id="msgrbtn" title="내 캐릭터의 롤플을 오른쪽에 두는 메신저 스타일">메신저</button>
+    <button id="savebtn" title="변경 내용을 게시본에 반영 (GitHub 저장소 업데이트)">업데이트</button>
+    <div class="settings">
+      <button id="setbtn">테마</button>
+      <div class="spanel" id="spanel">
+        <h4>화면 모드</h4>
+        <div class="srow">
+          <label><input type="radio" name="thememode" value="dark" checked> 다크</label>
+          <label><input type="radio" name="thememode" value="light"> 라이트</label>
+        </div>
+        <hr style="border:none;border-top:1px solid var(--line);margin:10px 0">
+        <h4>포인트 컬러</h4>
+        <div class="srow"><span>포인트</span><span class="cwrap"><input type="text" class="hexin" id="h-accent" value="#B26A9E" spellcheck="false"><input type="color" id="c-accent" value="#B26A9E"></span></div>
+      </div>
+    </div>
+    <button id="pwbtn" class="iconbtn" title="게시 비밀번호 등록"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="5.5"/><path d="M21 2l-9.6 9.6"/><path d="M15.5 7.5l3 3"/></svg></button>
+  </div>
+
+  <div class="startcard" id="startcard">
+    <p>롤플레이 로그를 한 블록씩 직접 쌓아 백업해요.</p>
+    <button class="bigbtn" id="createbtn">+ 자유백업 로그 만들기</button>
+  </div>
+
+  <div class="editor" id="editor">
+    <div class="ltitlerow">
+      <input class="ltitle" id="ltitle" value="새 자유백업 로그">
+      <button id="gwanlinkbtn" title="실제 자관과 연결">연결</button>
+    </div>
+    <div class="lgwan" id="lgwan"></div>
+    <div class="blocks" id="blocks"></div>
+    <div class="composer">
+      <div class="chips" id="chips"></div>
+      <div class="inrow">
+        <textarea class="inta" id="inta" placeholder="선택한 화자로 롤플레이를 입력하세요"></textarea>
+        <button class="sendbtn" id="sendbtn">추가</button>
+      </div>
+      <div class="inhint">Enter 추가 · Shift+Enter 줄바꿈 — 블록은 입력한 순서대로 쌓여요.</div>
+    </div>
+  </div>
+</div>
+<script>
+/* 더미 자관은 완전히 삭제했다 - 자관 목록은 항상 실제 저장된 데이터(crit-gwans)만 쓴다.
+   이 값이 GWANS 자체가 되어야 openGwanSelect()가 처음 열릴 때부터(뒤늦게 스크립트로
+   덮어쓰지 않고) 실제 목록을 보여준다. */
+const dsvg = (c, t) => 'data:image/svg+xml;utf8,' + encodeURIComponent(
+  `<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><rect width="100%" height="100%" fill="${c}"/><text x="50%" y="50%" fill="#ffffff" font-size="26" text-anchor="middle" dominant-baseline="middle" font-family="sans-serif" opacity="0.9">${t}</text></svg>`);
+const GWANS = (function () {
+  var real = null;
+  try { real = JSON.parse(localStorage.getItem('crit-gwans')); } catch (e) {}
+  return (real || []).map(function (g, gi) {
+    return {
+      name: g.name || '자관',
+      chars: (g.profiles || []).map(function (p, i) {
+        /* 인덱스로 팔레트를 골라 쓰면 자관에 등록된 실제 색과 무관한, 출처를 알 수 없는
+           색이 캐릭터마다 붙어버린다(실제로 겪은 버그) - jagwan.html 자신이 배경색 미설정 시
+           쓰는 기본값(#B26A9E)과 똑같이 맞춰야 자관에서 보는 색과 항상 일치한다 */
+        var col = (p.bg && p.bg.c1) || '#B26A9E';
+        return {
+          n: p.name || '캐릭터',
+          c: col,
+          av: (p.bg && p.bg.img) || null,
+          mine: !!p.mine,
+          seals: (p.gallery || []).map(function (im) { return im && im.src; }).filter(Boolean),
+        };
+      }),
+    };
+  });
+})();
+
+let log = null;      // { gwan, chars:[{n,c,seals,seal(-1=기본)}], blocks:[{type,ci,text}] }
+let speaker = 'desc'; // 'desc' | 캐릭터 인덱스
+
+/* ── 생성 플로우 ── */
+document.getElementById('createbtn').addEventListener('click', openGwanSelect);
+/* 실제 등록된 자관 중 하나를 고르는 창 - 최초 생성 때도 쓰고, 나중에 "자관 연동" 버튼에서도 재사용한다 */
+function pickRealGwan(onPick, onNone, onCancel) {
+  const ov = document.createElement('div'); ov.className = 'overlay';
+  ov.innerHTML = `<div class="modal"><h3>어느 자관의 로그인가요?</h3>
+    <div id="glist"></div>
+    ${GWANS.length ? '' : '<p style="font-size:12.5px;color:var(--dim);margin:0 0 10px">등록된 자관이 없어요.</p>'}
+    ${onNone ? '<div class="gsel none" id="gnone"><b>자관 없음</b><span>캐릭터를 직접 만들어요</span></div>' : ''}
+    <div class="mbtns"><button id="gc">취소</button></div></div>`;
+  document.body.appendChild(ov);
+  const glist = ov.querySelector('#glist');
+  GWANS.forEach(g => {
+    const row = document.createElement('div'); row.className = 'gsel';
+    row.innerHTML = `<b>${g.name}</b><span>캐릭터 ${g.chars.length}명</span>`;
+    row.addEventListener('click', () => { ov.remove(); onPick(g); });
+    glist.appendChild(row);
+  });
+  const gnone = ov.querySelector('#gnone');
+  if (gnone) gnone.addEventListener('click', () => { ov.remove(); onNone(); });
+  ov.addEventListener('click', e => { if (e.target === ov) { ov.remove(); if (onCancel) onCancel(); } });
+  ov.querySelector('#gc').addEventListener('click', () => { ov.remove(); if (onCancel) onCancel(); });
+}
+function openGwanSelect() {
+  /* 취소하면 아직 log가 없는 상태 그대로 남는데, 그러면 화면이 텅 비어서 다시 시도할 방법이
+     없었다 - 시작 카드를 다시 보여준다 */
+  const backToStart = () => { if (!log) document.getElementById('startcard').style.display = ''; };
+  pickRealGwan(
+    g => startLog(g.name, g.chars.map(c => ({ ...c, seal: -1 })), true),
+    () => openCharMaker(),
+    backToStart
+  );
+}
+function openCharMaker() {
+  const ov = document.createElement('div'); ov.className = 'overlay';
+  ov.innerHTML = `<div class="modal" style="width:420px"><h3>캐릭터 만들기</h3>
+    <div class="crow" style="margin-bottom:10px">
+      <input type="text" id="cm-gwanname" placeholder="자관 이름 (선택 - 나중에 실제 자관과 연동할 수 있어요)" style="flex:1">
+    </div>
+    <p style="font-size:12px;color:var(--dim);margin:0 0 12px">동그라미를 누르면 색이나 아바타를 고를 수 있어요.</p>
+    <div id="crows"></div>
+    <button class="addrow" id="caddrow">+ 캐릭터 추가</button>
+    <input type="color" id="cm-color" style="position:absolute;width:0;height:0;opacity:0;pointer-events:none">
+    <div class="mbtns"><button id="cc">취소</button><button class="primary" id="co">시작</button></div></div>`;
+  document.body.appendChild(ov);
+  const crows = ov.querySelector('#crows');
+  const hiddenColor = ov.querySelector('#cm-color');
+  const palette = ['#B26A9E', '#4a8fb0', '#7BA05B', '#C98A5B', '#8A7BC9', '#C95B7B'];
+  function refreshAv(btn, d) {
+    btn.style.border = '';
+    if (d.none) { btn.style.backgroundImage = 'none'; btn.style.backgroundColor = 'transparent'; btn.style.border = '1px dashed var(--line)'; }
+    else if (d.av) { btn.style.backgroundImage = `url(${d.av})`; btn.style.backgroundColor = ''; }
+    else { btn.style.backgroundImage = 'none'; btn.style.backgroundColor = d.c; }
+  }
+  function addRow(name, color) {
+    const d = { c: color, av: null };
+    const row = document.createElement('div'); row.className = 'crow';
+    row.innerHTML = `<button class="cavbtn" title="색 또는 아바타 선택"></button>
+      <input type="text" placeholder="캐릭터 이름" value="${name || ''}">
+      <label class="mlab"><input type="checkbox" class="minechk"> 내 캐릭터</label>
+      <button class="xdel" title="삭제">×</button>`;
+    row._data = d;
+    const btn = row.querySelector('.cavbtn');
+    refreshAv(btn, d);
+    /* 동그라미 클릭 → 색 선택 / 아바타 업로드 선택지 */
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      document.querySelectorAll('.avpop').forEach(x => x.remove());
+      const pop = document.createElement('div'); pop.className = 'avpop';
+      pop.innerHTML = `<input type="text" class="hexin" id="ap-hex" value="${d.c || '#B26A9E'}" placeholder="#RRGGBB" spellcheck="false">` +
+        `<button id="ap-color">색 선택</button><button id="ap-img">아바타 이미지</button><button id="ap-none">표시 없음</button>`;
+      const apHex = pop.querySelector('#ap-hex');
+      apHex.addEventListener('click', ev => ev.stopPropagation());
+      apHex.addEventListener('input', () => {
+        let v = apHex.value.trim();
+        if (/^[0-9a-fA-F]{6}$/.test(v)) v = '#' + v;
+        /* 색상은 아바타 이미지와 별개인 "이름 글씨색"이라, 색을 바꿔도 이미 등록된
+           아바타 이미지를 지우면 안 된다(실제로 겪은 버그 - 색을 바꾸면 아바타가 사라졌었다).
+           아바타가 없을 때만 이 색이 동그라미에 단색으로 대신 보인다 */
+        if (/^#[0-9a-fA-F]{6}$/.test(v)) { d.c = v.toLowerCase(); d.none = false; refreshAv(btn, d); }
+      });
+      pop.querySelector('#ap-color').addEventListener('click', ev => {
+        ev.stopPropagation(); pop.remove();
+        hiddenColor.value = d.c || '#B26A9E';
+        hiddenColor.oninput = () => { d.c = hiddenColor.value; d.none = false; refreshAv(btn, d); };
+        hiddenColor.click();
+      });
+      pop.querySelector('#ap-img').addEventListener('click', ev => {
+        ev.stopPropagation(); pop.remove();
+        pickImage(img => { d.av = img; d.none = false; refreshAv(btn, d); });
+      });
+      pop.querySelector('#ap-none').addEventListener('click', ev => {
+        ev.stopPropagation(); pop.remove();
+        d.none = true; d.av = null; refreshAv(btn, d);
+      });
+      row.appendChild(pop);
+      setTimeout(() => document.addEventListener('click', function h() {
+        pop.remove(); document.removeEventListener('click', h);
+      }), 0);
+    });
+    row.querySelector('.xdel').addEventListener('click', () => {
+      if (crows.children.length <= 1) return;
+      row.remove();
+    });
+    crows.appendChild(row);
+  }
+  addRow('', palette[0]);
+  ov.querySelector('#caddrow').addEventListener('click', () =>
+    addRow('', palette[crows.children.length % palette.length]));
+  const backToStart2 = () => { if (!log) document.getElementById('startcard').style.display = ''; };
+  ov.addEventListener('click', e => { if (e.target === ov) { ov.remove(); backToStart2(); } });
+  ov.querySelector('#cc').addEventListener('click', () => { ov.remove(); backToStart2(); });
+  ov.querySelector('#co').addEventListener('click', () => {
+    const chars = [...crows.children].map(r => ({
+      n: r.querySelector('input[type=text]').value.trim(),
+      c: r._data.c, av: r._data.av, none: !!r._data.none,
+      mine: r.querySelector('.minechk').checked,
+      seals: [], seal: -1,
+    })).filter(c => c.n);
+    if (!chars.length) { crows.querySelector('input[type=text]').focus(); return; }
+    const gwanName = ov.querySelector('#cm-gwanname').value.trim() || null;
+    ov.remove(); startLog(gwanName, chars, false);
+  });
+}
+function askMine(queue, done) {
+  if (!queue.length) { done(); return; }
+  const ch = queue.shift();
+  const ov = document.createElement('div'); ov.className = 'overlay';
+  ov.innerHTML = `<div class="modal"><p>자관에서 내 캐릭터를 감지했어요.<br>「<b>${ch.n}</b>」을(를) <b>무무</b>님의 캐릭터로 등록할까요?</p>
+    <div class="mbtns"><button id="an">아니요</button><button class="primary" id="ay">등록</button></div></div>`;
+  document.body.appendChild(ov);
+  ov.querySelector('#an').addEventListener('click', () => { ch.mine = false; ov.remove(); askMine(queue, done); });
+  ov.querySelector('#ay').addEventListener('click', () => { ch.mine = true; ov.remove(); askMine(queue, done); });
+}
+function renderLgwan() {
+  const lg = document.getElementById('lgwan');
+  lg.innerHTML = `<input class="lsub" id="lsub" placeholder="한 줄 소개 (자유롭게)" value="${(log.desc || '').replace(/"/g, '&quot;')}" spellcheck="false">`;
+  lg.querySelector('#lsub').addEventListener('input', e => { log.desc = e.target.value; saveFreelog(); });
+}
+/* 이 항목의 고유 키 - __CRIT_KEY가 없으면(.src 저하 모드, 게시 캡처용 mkFrame 등) location.search를
+   통째로 붙이면 안 된다 - mkFrame이 캐시 방지로 붙이는 &critsnap=<타임스탬프>, &preview=1 같은
+   부가 쿼리까지 키에 섞여 들어가 매번 다른 키가 되면서 저장된 데이터를 영영 못 찾는다
+   (게시 스냅샷이 "자관 선택" 새 화면으로 굳어버리던 진짜 원인). fid 값만 뽑아 항상 같은
+   "freelog.html?fid=<id>" 형태로 재구성해야 저장 시점 키와 정확히 일치한다. */
+function critFreeKey() {
+  if (window.__CRIT_KEY) return window.__CRIT_KEY;
+  var fid = new URLSearchParams(location.search).get('fid');
+  return fid ? ('freelog.html?fid=' + fid) : location.pathname.split('/').pop();
+}
+/* 부모(logs.html) 사이드바에 제목/자관을 즉시 반영 - 리스트를 안 열었다 닫았다 해야만
+   뱃지가 바뀌면 방금 만든 자관이 연동됐는지 알 수가 없다 */
+function postToParent(msg) {
+  try {
+    if (window.parent === window) return;
+    msg.file = critFreeKey();
+    window.parent.postMessage(Object.assign({ crit: null }, msg), '*');
+  } catch (e) {}
+}
+function syncGwanToParent(explicit) {
+  /* explicit(자관을 방금 직접 고른 경우)일 때만 자관 쪽 로그 리스트에도 자동 추가한다.
+     매번 로그를 열 때마다(수동 재연동이 아닌 단순 재오픈) 무조건 다시 추가해버리면,
+     자관 페이지에서 "연결 안 함"으로 풀거나 로그를 삭제해도 이 로그를 다시 열자마자
+     자관 쪽에 그 항목이 되살아나는 문제가 있었다. */
+  postToParent({ crit: 'log-gwan-file', gwan: log ? (log.gwan || null) : null, linked: !!(log && log.gwanLinked), explicit: !!explicit });
+}
+/* 제목 옆 #gwanlinkbtn: 편집 화면에서는 항상 "연결" 버튼(클릭하면 연동 창), 미리보기(방문자
+   시점)에서는 클릭 기능 없이 연동된 자관 이름만 뱃지로 보여주고, 연동 안 돼 있으면 아예 숨긴다 -
+   방문자에게 "연결"이라는 편집용 문구/기능을 보여줄 필요는 없지만, 이 로그가 어느 자관 소속인지는
+   알려줘야 한다 */
+function renderTitleLabel() {
+  const gb = document.getElementById('gwanlinkbtn');
+  if (!gb) return;
+  const isPreview = document.documentElement.classList.contains('crit-preview');
+  const linked = !!(log && log.gwan && log.gwanLinked);
+  if (isPreview) {
+    if (linked) {
+      gb.style.display = '';
+      gb.textContent = log.gwan;
+      gb.style.pointerEvents = 'none';
+      gb.style.cursor = 'default';
+      gb.classList.add('on');
+      gb.title = '';
+    } else {
+      gb.style.display = 'none';
+    }
+  } else {
+    gb.style.display = '';
+    gb.style.pointerEvents = '';
+    gb.style.cursor = '';
+    gb.textContent = '연결';
+    gb.classList.toggle('on', linked);
+    gb.title = (log && log.gwan) ? ('연동: ' + log.gwan + (log.gwanLinked ? '' : ' (미연동)') + ' - 클릭해서 변경') : '실제 자관과 연결';
+  }
+}
+function openGwanLinkPicker() {
+  if (!log) return;
+  pickRealGwan(g => {
+    log.gwan = g.name;
+    log.gwanLinked = true;
+    renderTitleLabel();
+    syncGwanToParent(true);
+    syncCharsFromGwan();
+    saveFreelog();
+  }, null, null);
+}
+/* 연동된 자관에 나중에 캐릭터가 추가돼도, 이 로그를 다시 열 때까지는 캐릭터 목록에
+   반영이 안 됐다 - 기존 캐릭터(색/아바타/인장 커스텀)는 그대로 두고 새로 생긴 것만 추가한다 */
+function syncCharsFromGwan() {
+  if (!log || !log.gwanLinked || !log.gwan) return;
+  const real = GWANS.find(g => g.name === log.gwan);
+  if (!real) return;
+  const existingNames = log.chars.map(c => c.n);
+  let added = false;
+  real.chars.forEach(rc => {
+    if (existingNames.indexOf(rc.n) === -1) {
+      log.chars.push(Object.assign({}, rc, { seal: -1 }));
+      added = true;
+    }
+  });
+  if (added) { renderChips(); saveFreelog(); }
+}
+function startLog(gwanName, chars, gwanLinked) {
+  log = { gwan: gwanName, gwanLinked: !!gwanLinked, chars, blocks: [],
+    title: window.__CRIT_ENTRY_TITLE || '새 자유백업 로그', desc: '' };
+  speaker = chars.length ? 0 : 'desc';
+  document.getElementById('startcard').style.display = 'none';
+  document.getElementById('editor').style.display = 'flex';
+  document.getElementById('ltitle').value = log.title;
+  renderLgwan();
+  renderTitleLabel();
+  renderChips(); renderBlocks();
+  document.getElementById('inta').focus();
+  saveFreelog();
+  syncGwanToParent(true);
+  if (gwanName) {
+    const mines = chars.filter(c => c.mine);
+    if (mines.length) askMine([...mines], () => renderChips());
+  }
+}
+
+/* ── 화자 칩 + 인장 선택 ── */
+function sealCss(ch) {
+  if (ch.seal >= 0 && ch.seals[ch.seal]) return `background-image:url(${ch.seals[ch.seal]})`;
+  if (ch.av) return `background-image:url(${ch.av})`;
+  if (ch.none || !ch.c) return 'background:transparent;border:1px dashed var(--line)';
+  return `background:${ch.c}`;
+}
+function renderChips() {
+  const box = document.getElementById('chips');
+  box.innerHTML = '';
+  log.chars.forEach((ch, i) => {
+    const chip = document.createElement('button');
+    chip.className = 'chip' + (speaker === i ? ' on' : '');
+    chip.innerHTML = `<span class="cav" style="${sealCss(ch)}"></span>${ch.n}` +
+      '<span class="chipedit" title="캐릭터 수정 (색·아바타·표시)">✎</span>' +
+      (ch.mine ? '<span class="minetag">내 캐릭터</span>' : '') +
+      (ch.seals.length ? `<span class="sealbtn" title="인장 선택"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>` : '');
+    chip.addEventListener('click', () => { speaker = i; renderChips(); document.getElementById('inta').focus(); });
+    chip.addEventListener('contextmenu', e => { e.preventDefault(); openCharEdit(ch); });
+    const ceBtn = chip.querySelector('.chipedit');
+    if (ceBtn) ceBtn.addEventListener('click', e => { e.stopPropagation(); openCharEdit(ch); });
+    const sb = chip.querySelector('.sealbtn');
+    if (sb) sb.addEventListener('click', e => { e.stopPropagation(); openSealPop(chip, ch); });
+    box.appendChild(chip);
+  });
+  const dchip = document.createElement('button');
+  dchip.className = 'chip descchip' + (speaker === 'desc' ? ' on' : '');
+  dchip.textContent = '지문';
+  dchip.addEventListener('click', () => { speaker = 'desc'; renderChips(); document.getElementById('inta').focus(); });
+  box.appendChild(dchip);
+}
+function openSealPop(chip, ch) {
+  document.querySelectorAll('.sealpop').forEach(x => x.remove());
+  const pop = document.createElement('div'); pop.className = 'sealpop';
+  const mk = (css, idx, title) => {
+    const o = document.createElement('span');
+    o.className = 'sopt' + (ch.seal === idx ? ' on' : '');
+    o.style.cssText = css; o.title = title;
+    o.addEventListener('click', e => {
+      e.stopPropagation();
+      ch.seal = idx; pop.remove(); renderChips(); renderBlocks(); saveFreelog();
+    });
+    pop.appendChild(o);
+  };
+  const lb = document.createElement('span'); lb.className = 'slabel'; lb.textContent = '인장';
+  pop.appendChild(lb);
+  mk(`background:${ch.c}`, -1, '기본 인장 (색)');
+  ch.seals.forEach((s, i) => mk(`background-image:url(${s})`, i, '프로필 갤러리 인장'));
+  chip.appendChild(pop);
+  setTimeout(() => document.addEventListener('click', function h() {
+    pop.remove(); document.removeEventListener('click', h);
+  }), 0);
+}
+
+/* ── 캐릭터 수정 (칩 우클릭) ── */
+function openCharEdit(ch) {
+  const t = { n: ch.n, c: ch.c, av: ch.av || null, mine: !!ch.mine, none: !!ch.none };
+  const ov = document.createElement('div'); ov.className = 'overlay';
+  ov.innerHTML = `<div class="modal" style="width:360px"><h3>캐릭터 수정</h3>
+    <div class="crow" style="margin-bottom:12px">
+      <button class="cavbtn" id="ce-av" title="아바타 이미지 선택"></button>
+      <input type="text" id="ce-name" placeholder="캐릭터 이름" value="${(t.n || '').replace(/"/g,'&quot;')}">
+    </div>
+    <div class="srow" style="margin-bottom:10px"><span>이름 글씨색</span><span class="cwrap">` +
+      `<input type="text" class="hexin" id="ce-namehex" value="${t.c || '#B26A9E'}" spellcheck="false">` +
+      `<input type="color" id="ce-namecolor" value="${t.c || '#B26A9E'}"></span></div>` +
+    `<div class="hint" style="margin:-6px 0 10px">아바타 이미지가 없을 때는 이 색이 동그라미에도 대신 표시돼요.</div>
+    <label class="mlab" style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--dim);cursor:pointer;margin-bottom:4px">
+      <input type="checkbox" id="ce-mine" ${t.mine ? 'checked' : ''}> 내 캐릭터</label>
+    <div class="mbtns"><button id="ce-c">취소</button><button class="primary" id="ce-o">저장</button></div></div>`;
+  document.body.appendChild(ov);
+  const btn = ov.querySelector('#ce-av');
+  const refresh = () => {
+    btn.style.border = '';
+    if (t.none) { btn.style.backgroundImage = 'none'; btn.style.backgroundColor = 'transparent'; btn.style.border = '1px dashed var(--line)'; }
+    else if (t.av) { btn.style.backgroundImage = `url(${t.av})`; btn.style.backgroundColor = ''; }
+    else { btn.style.backgroundImage = 'none'; btn.style.backgroundColor = t.c; }
+  };
+  refresh();
+  /* 이름 글씨색은 아바타 이미지와 별개라, 여기서 바꿔도 등록된 아바타 이미지를 지우지 않는다
+     (실제로 겪은 버그 - 팝업 안에 숨겨둔 색선택이 아바타를 같이 지워버렸다). 이 모달 자체에
+     항상 보이는 hex 입력 + 피커로 바로 확인하며 바꿀 수 있어야 한다는 피드백으로 재구성함 */
+  wireHex(ov.querySelector('#ce-namehex'), ov.querySelector('#ce-namecolor'), () => {
+    t.c = ov.querySelector('#ce-namecolor').value; t.none = false; refresh();
+  });
+  btn.addEventListener('click', e => {
+    e.stopPropagation();
+    document.querySelectorAll('.avpop').forEach(x => x.remove());
+    const pop = document.createElement('div'); pop.className = 'avpop';
+    pop.innerHTML = `<button id="ap-img">아바타 이미지</button><button id="ap-none">표시 없음</button>`;
+    pop.querySelector('#ap-img').addEventListener('click', ev => {
+      ev.stopPropagation(); pop.remove();
+      pickImage(img => { t.av = img; t.none = false; refresh(); });
+    });
+    pop.querySelector('#ap-none').addEventListener('click', ev => {
+      ev.stopPropagation(); pop.remove();
+      t.none = true; t.av = null; refresh();
+    });
+    btn.parentNode.appendChild(pop);
+    setTimeout(() => document.addEventListener('click', function h() {
+      pop.remove(); document.removeEventListener('click', h);
+    }), 0);
+  });
+  ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); });
+  ov.querySelector('#ce-c').addEventListener('click', () => ov.remove());
+  ov.querySelector('#ce-o').addEventListener('click', () => {
+    const name = ov.querySelector('#ce-name').value.trim();
+    if (!name) { ov.querySelector('#ce-name').focus(); return; }
+    ch.n = name; ch.c = t.c; ch.av = t.av; ch.none = t.none; ch.mine = ov.querySelector('#ce-mine').checked;
+    ov.remove(); renderChips(); renderBlocks(); saveFreelog();
+  });
+}
+
+/* ── 블록 ── */
+function renderBlocks() {
+  const box = document.getElementById('blocks');
+  box.innerHTML = '';
+  if (!log.blocks.length) {
+    box.innerHTML = '<div class="bempty">아직 블록이 없어요. 아래에서 화자를 고르고 첫 롤플레이를 입력해보세요.</div>';
+    return;
+  }
+  log.blocks.forEach((b, i) => {
+    const el = document.createElement('div');
+    if (b.type === 'desc') {
+      el.className = 'blk desc';
+      el.innerHTML = `<div class="btxt">${esc(b.text)}</div><button class="bdel" title="블록 삭제">×</button>`;
+    } else {
+      const ch = log.chars[b.ci];
+      const prev = log.blocks[i - 1];
+      const cont = prev && prev.type === 'char' && prev.ci === b.ci;   // 연속 발언
+      el.className = 'blk' + (ch.mine ? ' mine' : '') + (cont ? ' cont' : '');
+      el.innerHTML = `<span class="bav" style="${sealCss(ch)}"></span>
+        <div>${cont ? '' : `<div class="bname" style="color:${ch.none || !ch.c ? 'inherit' : ch.c}">${ch.n}</div>`}
+        <div class="btxt">${esc(b.text)}</div></div>
+        <button class="bdel" title="블록 삭제">×</button>`;
+    }
+    el.querySelector('.bdel').addEventListener('click', () => {
+      confirmModal('이 블록을 삭제할까요?', '삭제', () => { log.blocks.splice(i, 1); renderBlocks(); saveFreelog(); });
+    });
+    box.appendChild(el);
+  });
+  alignConsecutiveWidths();
+  box.scrollTop = box.scrollHeight;
+}
+/* 메신저 스타일에서 같은 화자의 연속 발언(.cont)은 말풍선 폭이 각자 제멋대로면 줄이
+   안 맞아 보인다 - 한 묶음(연속 구간) 안에서 가장 넓은 말풍선 기준으로 나머지 폭을 맞춘다.
+   묶음마다 독립적으로 계산하므로 다른 화자/다른 묶음끼리는 서로 영향을 안 준다 */
+function alignConsecutiveWidths() {
+  if (!document.body.classList.contains('msgr')) return;
+  const box = document.getElementById('blocks');
+  if (!box) return;
+  const items = [...box.querySelectorAll('.blk:not(.desc)')];
+  let i = 0;
+  while (i < items.length) {
+    const group = [items[i]];
+    let j = i + 1;
+    while (j < items.length && items[j].classList.contains('cont')) { group.push(items[j]); j++; }
+    group.forEach(el => { el.style.width = ''; });
+    if (group.length > 1) {
+      let max = 0;
+      group.forEach(el => { max = Math.max(max, el.offsetWidth); });
+      group.forEach(el => { el.style.width = max + 'px'; });
+    }
+    i = j;
+  }
+  /* 내 캐릭터 말풍선은 이름표 폭 때문에(또는 같은 묶음의 더 긴 말풍선 때문에) 박스가
+     넓어질 수 있는데, 그때 짧은 한 줄짜리 텍스트가 좌측정렬로 남으면 오른쪽에 빈 공간이
+     휑하게 남아 어색해 보인다. 줄바꿈 없이 한 줄에 다 들어가는(=박스 폭을 다 못 채우는)
+     짧은 텍스트는 이름표처럼 우측정렬, 여러 줄로 감싸지는 긴 텍스트는 그대로 좌측정렬. */
+  items.forEach(el => {
+    const t = el.querySelector('.btxt');
+    if (!t) return;
+    t.classList.remove('short');
+    if (!el.classList.contains('mine')) return;
+    const lh = parseFloat(getComputedStyle(t).lineHeight) || 0;
+    if (lh && t.scrollHeight <= lh * 1.4) t.classList.add('short');
+  });
+}
+function esc(s) { return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+function submit() {
+  const ta = document.getElementById('inta');
+  const text = ta.value.trim();
+  if (!text || !log) return;
+  log.blocks.push(speaker === 'desc' ? { type: 'desc', text } : { type: 'char', ci: speaker, text });
+  ta.value = '';
+  renderBlocks(); ta.focus();
+  saveFreelog();
+}
+document.getElementById('gwanlinkbtn').addEventListener('click', openGwanLinkPicker);
+const msgrbtn = document.getElementById('msgrbtn');
+msgrbtn.addEventListener('click', () => {
+  const on = msgrbtn.classList.toggle('on');
+  document.body.classList.toggle('msgr', on);
+  alignConsecutiveWidths();
+});
+let __alignResizeTm = null;
+window.addEventListener('resize', () => {
+  clearTimeout(__alignResizeTm);
+  __alignResizeTm = setTimeout(alignConsecutiveWidths, 150);
+});
+document.getElementById('sendbtn').addEventListener('click', submit);
+document.getElementById('inta').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(); }
+});
+
+function confirmModal(msg, okLabel, onOk) {
+  const ov = document.createElement('div'); ov.className = 'overlay';
+  ov.innerHTML = `<div class="modal"><p>${msg}</p>
+    <div class="mbtns"><button id="wc">취소</button><button class="danger" id="wo">${okLabel}</button></div></div>`;
+  document.body.appendChild(ov);
+  ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); });
+  ov.querySelector('#wc').addEventListener('click', () => ov.remove());
+  ov.querySelector('#wo').addEventListener('click', () => { ov.remove(); onOk(); });
+}
+
+/* 파일 선택 */
+const _fp = document.createElement('input');
+_fp.type = 'file'; _fp.accept = 'image/*'; _fp.style.display = 'none';
+document.body.appendChild(_fp);
+let _fpCb = null;
+_fp.addEventListener('change', () => {
+  const f = _fp.files[0]; _fp.value = '';
+  if (!f || !_fpCb) return;
+  const r = new FileReader(); r.onload = () => _fpCb(r.result); r.readAsDataURL(f);
+});
+/* 업로드한 이미지를 base64로 localStorage에 그대로 박아두면 용량 제한에 걸리므로,
+   디스크에 파일로 저장하고 crit-image://<id> 참조만 돌려받는다 (Electron API 없는
+   브라우저 미리보기에서는 그냥 base64를 그대로 씀) */
+function toImageRef(dataUrl) {
+  if (window.api && window.api.images && window.api.images.save) {
+    return window.api.images.save(dataUrl).then(res => (res && res.url) ? res.url : dataUrl).catch(() => dataUrl);
+  }
+  return Promise.resolve(dataUrl);
+}
+function pickImage(cb) {
+  const cbRef = d => { toImageRef(d).then(cb); };
+  _fpCb = function (d) { if (window.critCrop) critCrop(d, 1, cbRef); else cbRef(d); };
+  _fp.click();
+}
+
+/* 테마 */
+const setbtn = document.getElementById('setbtn'), spanel = document.getElementById('spanel');
+setbtn.addEventListener('click', e => { e.stopPropagation(); spanel.classList.toggle('open'); });
+spanel.addEventListener('click', e => e.stopPropagation());
+document.addEventListener('click', () => spanel.classList.remove('open'));
+const root = document.documentElement.style;
+function applyTheme() { root.setProperty('--accent', document.getElementById('c-accent').value); }
+/* hex 텍스트 입력 ↔ 색상 피커 양방향 동기화 (피커만 있으면 정확한 hex 값을 직접 입력할 방법이 없었어요) */
+function wireHex(hexEl, colEl, onChange) {
+  if (!hexEl || !colEl) return;
+  hexEl.addEventListener('input', () => {
+    let v = hexEl.value.trim();
+    if (/^[0-9a-fA-F]{6}$/.test(v)) v = '#' + v;
+    if (/^#[0-9a-fA-F]{6}$/.test(v)) { colEl.value = v.toLowerCase(); if (onChange) onChange(); }
+  });
+  hexEl.addEventListener('blur', () => { hexEl.value = colEl.value; });
+  colEl.addEventListener('input', () => { hexEl.value = colEl.value; if (onChange) onChange(); });
+}
+(() => {
+  const hex = document.getElementById('h-accent'), col = document.getElementById('c-accent');
+  hex.addEventListener('input', () => {
+    let v = hex.value.trim();
+    if (/^[0-9a-fA-F]{6}$/.test(v)) v = '#' + v;
+    if (/^#[0-9a-fA-F]{6}$/.test(v)) { col.value = v.toLowerCase(); applyTheme(); }
+  });
+  hex.addEventListener('blur', () => { hex.value = col.value; });
+  col.addEventListener('input', () => { hex.value = col.value; applyTheme(); });
+})();
+document.querySelectorAll('input[name=thememode]').forEach(r => r.addEventListener('change', () => {
+  document.body.classList.toggle('light', document.querySelector('input[name=thememode]:checked').value === 'light');
+}));
+
+/* ── 게시 비밀번호 등록 (열쇠 버튼) ── */
+let pubPassword = null;
+const pwbtnEl = document.getElementById('pwbtn');
+const EYE_SVG = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>';
+const EYEOFF_SVG = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/><path d="M3 3l18 18"/></svg>';
+if (pwbtnEl) pwbtnEl.addEventListener('click', () => {
+  const ov = document.createElement('div'); ov.className = 'overlay';
+  ov.innerHTML = `<div class="modal"><h3>게시 비밀번호 등록</h3>
+    <div class="hint" style="margin:0 0 8px">게시(암호화 업로드) 시 이 비밀번호로 페이지가 잠깁니다. 확인 입력 없이 바로 등록돼요.</div>
+    <div class="pwwrap"><input type="password" id="pwin" value="${pubPassword || ''}" placeholder="비밀번호 입력" autocomplete="new-password">
+      <button class="eyebtn" id="pweye">${EYE_SVG}</button></div>
+    <div class="mbtns">${pubPassword ? '<button class="danger" id="pd">삭제</button>' : ''}<button id="pc">취소</button><button class="primary" id="po">등록</button></div></div>`;
+  document.body.appendChild(ov);
+  const pwin = ov.querySelector('#pwin'), eye = ov.querySelector('#pweye');
+  pwin.focus();
+  const pd = ov.querySelector('#pd');
+  if (pd) pd.addEventListener('click', () => {
+    ov.remove();
+    confirmModal('등록된 게시 비밀번호를 삭제할까요?<br>이후 게시물은 비밀번호 없이 공개 게시됩니다.', '삭제', () => {
+      pubPassword = null;
+      document.getElementById('pwbtn').classList.remove('on');
+    });
+  });
+  eye.addEventListener('click', () => {
+    const show = pwin.type === 'password';
+    pwin.type = show ? 'text' : 'password';
+    eye.innerHTML = show ? EYEOFF_SVG : EYE_SVG;
+    pwin.focus();
+  });
+  ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); });
+  ov.querySelector('#pc').addEventListener('click', () => ov.remove());
+  ov.querySelector('#po').addEventListener('click', () => {
+    pubPassword = pwin.value.trim() || null;
+    document.getElementById('pwbtn').classList.toggle('on', !!pubPassword);
+    ov.remove();
+  });
+});
+
+/* ── 저장/복원: 여태 이 로그는 어디에도 저장이 안 돼서 새로고침하면 그냥 사라졌다 ── */
+var FL_KEY = 'crit-freelog:' + critFreeKey();
+var flTimer = null;
+function flFlush() {
+  if (!log) return;
+  clearTimeout(flTimer);
+  flTimer = null;
+  try { localStorage.setItem(FL_KEY, JSON.stringify(log)); } catch (e) {}
+}
+function saveFreelog() {
+  if (!log) return;
+  if (!window.api || !window.api.rawlog || !window.api.rawlog.save) return; /* 게시본/미리보기에선 저장 안 함 */
+  clearTimeout(flTimer);
+  flTimer = setTimeout(flFlush, 400);
+}
+/* 디바운스 타이머(400ms)가 다 돌기 전에 탭/페이지를 벗어나면 방금 입력한 블록이 그대로
+   증발했다 - 페이지가 숨겨지거나 떠날 때는 대기 중인 저장을 즉시 밀어 넣는다 */
+document.addEventListener('visibilitychange', function () { if (document.hidden) flFlush(); });
+window.addEventListener('pagehide', flFlush);
+function restoreEditor() {
+  /* 자관 쪽에서 이 로그와의 연결을 "연결 안 함"으로 풀거나 삭제했으면 crit-logs-list의
+     이 항목 gwan이 null로 지워져 있다 - 그런데 이 로그 자체의 저장본(log.gwan/gwanLinked)은
+     그 사실을 모르니, 열 때마다 매번 자관 쪽에 자기 자신을 다시 등록해버렸다.
+     열릴 때 crit-logs-list를 한 번 확인해서 저쪽이 이미 풀었으면 이쪽도 맞춰 지운다. */
+  try {
+    var ll0 = JSON.parse(localStorage.getItem('crit-logs-list'));
+    var selfEntry = Array.isArray(ll0) && ll0.find(function (x) { return x.f === critFreeKey(); });
+    if (selfEntry && !selfEntry.gwan && log.gwanLinked) {
+      log.gwan = null;
+      log.gwanLinked = false;
+    }
+  } catch (eLl0) {}
+  speaker = log.chars.length ? 0 : 'desc';
+  document.getElementById('startcard').style.display = 'none';
+  document.getElementById('editor').style.display = 'flex';
+  document.getElementById('ltitle').value = log.title || '새 자유백업 로그';
+  renderLgwan();
+  renderTitleLabel();
+  renderChips(); renderBlocks();
+  saveFreelog();
+  syncGwanToParent();
+  syncCharsFromGwan();
+}
+document.getElementById('ltitle').addEventListener('input', function (e) {
+  if (!log) return;
+  log.title = e.target.value;
+  saveFreelog();
+  /* 제목을 고치면 왼쪽 로그 목록의 이름도 같이 바뀌게 부모(logs.html)에 알린다 */
+  postToParent({ crit: 'log-title-file', t: log.title });
+});
+function critFreelogInit(attempt) {
+  var isReal = !!(window.api && window.api.rawlog && window.api.rawlog.save);
+  var saved = null;
+  try { saved = JSON.parse(localStorage.getItem(FL_KEY)); } catch (e) {}
+  if (saved && saved.blocks) {
+    log = saved;
+    restoreEditor();
+    return;
+  }
+  if (isReal) {
+    /* 실제 앱(주인)에서 아직 로그가 없으면 "만들기" 버튼을 누르게 하지 않고 바로 자관 선택 창을 띄운다 */
+    document.getElementById('startcard').style.display = 'none';
+    openGwanSelect();
+    return;
+  }
+  /* window.self !== window.top(iframe 안)만으로는 "진짜 앱"을 구분 못 한다 - 게시된
+     사이트도 로그 페이지는 똑같이 iframe 구조라 방문자도 이 조건을 만족한다.
+     window.__CRIT_KEY는 logs.html의 critLoadStatic(=앱에서 window.api가 확인된 뒤에만
+     실행되는 srcdoc 경로)에서만 심어주는데, 부모가 재시도 끝에 포기하고 .src= 저하 모드로
+     내려버리면 __CRIT_KEY 자체가 안 심긴다 - 그러면 실제 앱인데도 "방문자"로 오판해서
+     이 화면(자유백업 로그 없음)이 잘못 떴다. window.top(=logs.html, 최상위 창)은 이 iframe과
+     달리 처음부터 window.api를 갖고 있으므로, 이것도 같이 확인해야 저하 모드에서도
+     "진짜 앱"임을 알아채고 재시도/자동 재오픈을 계속할 수 있다. */
+  var topHasApi = false;
+  try { topHasApi = window.top !== window && !!(window.top.api); } catch (eTop) {}
+  var loadedByApp = typeof window.__CRIT_KEY !== 'undefined' || topHasApi;
+  if (loadedByApp && attempt < 20) {
+    setTimeout(function () { critFreelogInit(attempt + 1); }, 150);
+    return;
+  }
+  var sc = document.getElementById('startcard');
+  var p = sc && sc.querySelector('p');
+  var cb = document.getElementById('createbtn');
+  if (loadedByApp) {
+    console.error('[Crit] freelog.html: window.api를 찾지 못했어요 (attempt=' + attempt + ')');
+    /* 이 iframe 안에서 3초를 기다려도 window.api가 안 잡히는 경우가 실제로 있었다(첫 srcdoc
+       iframe만 유독 느린 것으로 보임) - 사용자가 "다시 시도"를 누르길 기다리지 않고, 부모한테
+       iframe을 통째로 새로 만들어서 한 번 자동으로 재시도해달라고 먼저 요청한다. 새 iframe이
+       뜨면 이 문서는 곧바로 교체되므로 에러 화면이 거의 안 보인다. 그래도 실패하면(부모가
+       이미 한 번 자동 재시도했다면 무시함) 잠시 후 진짜 에러 화면을 보여준다. */
+    var reopenSent = false;
+    try {
+      if (window.parent !== window) {
+        window.parent.postMessage({ crit: 'reopen-log', file: critFreeKey(), auto: true }, '*');
+        reopenSent = true;
+      }
+    } catch (e2) {}
+    setTimeout(function () {
+      /* 자동 재시도가 실제로 성공했다면 이 iframe 자체가 이미 교체돼 사라졌을 것이다 -
+         아직 살아있다는 건 자동 재시도가 무시됐거나 실패했다는 뜻이니 에러 화면을 보여준다 */
+      if (p) p.textContent = '로그를 불러오지 못했어요. 다시 시도해주세요.';
+      if (cb) {
+        cb.textContent = '다시 시도';
+        cb.style.display = '';
+        cb.onclick = function () {
+          var ok = false;
+          try {
+            if (window.parent !== window) {
+              window.parent.postMessage({ crit: 'reopen-log', file: critFreeKey() }, '*');
+              ok = true;
+            }
+          } catch (e3) {}
+          if (!ok) location.reload();
+        };
+      }
+    }, reopenSent ? 600 : 0);
+  } else {
+    /* 게시본/미리보기(진짜 방문자)는 저장할 방법이 없으니 "로그 만들기"를 아예 노출하지 않는다 -
+       예전엔 방문자도 이 창에서 더미 자관 목록이 뜨는 생성 화면을 볼 수 있었다 */
+    if (cb) cb.style.display = 'none';
+    if (p) p.textContent = '아직 작성된 로그가 없어요.';
+  }
+}
+critFreelogInit(0);
+</script>
+
+<!-- Crit 앱 임베드용: 다른 페이지의 iframe 안에서 열릴 때는 자체 전역 메뉴를 숨깁니다 -->
+<style>html.crit-embedded .topnav { display: none !important; }</style>
+<script>if (window.self !== window.top) document.documentElement.classList.add('crit-embedded')</script>
+
+<!-- Crit: 이 뷰어의 테마(포인트 컬러/모드)를 저장해 다시 열어도 유지합니다 (로그별 테마) -->
+<script>
+(function () {
+  var KEY = 'crit-page-theme:' + critFreeKey();
+  var col = document.getElementById('c-accent'), hex = document.getElementById('h-accent');
+  if (!col) return;
+  try {
+    var t = JSON.parse(localStorage.getItem(KEY));
+    if (t) {
+      if (t.accent) { col.value = t.accent; if (hex) hex.value = t.accent; col.dispatchEvent(new Event('input', { bubbles: true })); }
+      if (t.mode) {
+        var r = document.querySelector('input[name=thememode][value=' + t.mode + ']');
+        if (r && !r.checked) { r.checked = true; r.dispatchEvent(new Event('change', { bubbles: true })); }
+      }
+    }
+  } catch (e) {}
+  function saveT() {
+    var c = document.querySelector('input[name=thememode]:checked');
+    try { localStorage.setItem(KEY, JSON.stringify({ accent: col.value, mode: c ? c.value : 'dark' })); } catch (e) {}
+  }
+  col.addEventListener('input', saveT);
+  if (hex) hex.addEventListener('input', saveT);
+  document.querySelectorAll('input[name=thememode]').forEach(function (r) { r.addEventListener('change', saveT); });
+})();
+</script>
+<!-- crit-preview-mode: ?preview=1 로 열리면 게시본처럼 편집 UI를 숨깁니다 (검색/테마/메신저 스타일만 유지) -->
+<script>
+(function () {
+  if (!(window.__CRIT_PREVIEW || new URLSearchParams(location.search).has("preview"))) return;
+  var HIDE = ["세션 정보", "편집 모드", "업데이트", "지문출력 캐릭터", "사담 캐릭터", "비밀번호", "저장", "메신저", "테마"];
+  document.querySelectorAll("button").forEach(function (b) {
+    var t = b.textContent.trim();
+    if (HIDE.indexOf(t) !== -1) b.style.display = "none";
+  });
+  document.querySelectorAll("#keybtn, .keybtn, #lockbtn").forEach(function (b) { b.style.display = "none"; });
+})();
+</script>
+<!-- crit-viewer-publish: 앱 안(iframe)에서는 업데이트 버튼이 HTML 저장 대신 GitHub 게시를 요청 -->
+<script>
+(function () {
+  if (window.self === window.top) return; /* 브라우저 단독 열람 시엔 기존 저장 동작 유지 */
+  var btn = document.getElementById("savebtn");
+  if (!btn) return;
+  btn.addEventListener("click", function (e) {
+    e.stopImmediatePropagation();
+    e.preventDefault();
+    window.parent.postMessage("crit-publish", "*");
+  }, true);
+})();
+</script>
+<!-- crit-preview2: 게시본(리더) 모드 - 통계·탭·캐릭터 리스트와 편집 요소를 숨기고 검색/테마/메신저만 남김 -->
+<style>
+  html.crit-preview .stats, html.crit-preview .bartitle, html.crit-preview .tabbar,
+  html.crit-preview .charbar, html.crit-preview #pwbtn, html.crit-preview .chip-edit,
+  html.crit-preview .allbtn { display: none !important; }
+  /* 미리보기에서는 툴바에 남은 버튼이 테마 하나뿐인데도 툴바 자체(패딩+구분선+아래
+     여백)가 그대로 자리를 차지해서 제목 위 여백이 쓸데없이 넓어 보였다(실제로 겪은
+     불만 - 모바일뿐 아니라 데스크탑 폭에서도 마찬가지였음) - 폭과 상관없이 툴바
+     전체를 없애 공간을 되찾는다 (트레이드오프: 방문자는 이 페이지에서 다크/라이트를
+     더 이상 못 바꾼다) */
+  html.crit-preview .toolbar { display: none !important; }
+  /* 자유백업은 방문자가 어차피 입력/저장을 못 하니 미리보기(방문자 시점)에선 입력창 자체를 숨긴다 */
+  html.crit-preview .composer { display: none !important; }
+  /* 제목/한줄소개 입력칸과 블록 삭제(×) 버튼도 "수정 가능"하다는 느낌을 주니 미리보기에선 없앤다 */
+  html.crit-preview .ltitle, html.crit-preview .lsub { pointer-events: none; cursor: default;
+    border-bottom-color: transparent !important; }
+  /* #gwanlinkbtn은 CSS로 통째로 숨기지 않는다 - 미리보기에서도 자관이 연동돼 있으면
+     "코마" 같은 뱃지로는 보여야 한다(안 보이면 방문자가 자관 연동 여부를 알 방법이 없다).
+     보이기/숨기기·글자·클릭 가능 여부는 renderTitleLabel()이 미리보기 여부를 보고 직접 결정한다 */
+  html.crit-preview .bdel { display: none !important; }
+</style>
+<script>
+if ((window.__CRIT_PREVIEW || new URLSearchParams(location.search).has("preview"))) {
+  var _ltitle = document.getElementById('ltitle'), _lsub = document.querySelector('.lsub');
+  if (_ltitle) _ltitle.readOnly = true;
+  if (_lsub) _lsub.readOnly = true;
+}
+</script>
+<script>
+if ((window.__CRIT_PREVIEW || new URLSearchParams(location.search).has("preview"))) document.documentElement.classList.add("crit-preview");
+</script>
+<!-- crit-pass: 게시 비밀번호를 저장해 두었다가 게시할 때 비밀번호 게이트를 겁니다 -->
+<script>
+(function () {
+  if (typeof pubPassword === "undefined") return;
+  var KEY = "crit-page-pass:" + critFreeKey();
+  try {
+    var p = localStorage.getItem(KEY);
+    if (p) {
+      pubPassword = p;
+      var b = document.getElementById("pwbtn");
+      if (b) b.style.color = "var(--accent)";
+    }
+  } catch (e) {}
+  /* 열쇠 모달의 버튼 조작 후 pubPassword 상태를 저장 */
+  document.addEventListener("click", function (e) {
+    if (!e.target || !e.target.closest) return;
+    var m = e.target.closest(".modal");
+    if (!m || !m.querySelector("#pwin")) return;
+    setTimeout(function () {
+      try {
+        if (pubPassword) localStorage.setItem(KEY, pubPassword);
+        else localStorage.removeItem(KEY);
+      } catch (err) {}
+    }, 80);
+  }, true);
+})();
+</script>
+<!-- crit-modal-dragguard: 모달 안에서 드래그를 시작해 바깥에서 놓아도 모달이 닫히지 않게 (전체 모달 공통) -->
+<script>
+(function () {
+  var downTarget = null;
+  document.addEventListener("pointerdown", function (e) { downTarget = e.target; }, true);
+  document.addEventListener("click", function (e) {
+    var t = e.target;
+    if (!t || !t.classList || !t.classList.contains("overlay")) return;
+    /* 클릭이 오버레이(배경)에서 시작되지 않았다면 = 모달 내부에서 드래그 시작 → 닫힘 차단 */
+    if (downTarget !== t) {
+      e.stopImmediatePropagation();
+      e.preventDefault();
+    }
+  }, true);
+})();
+</script>
+<!-- crit-crop: 공용 이미지 자르기 모달 - 비율 고정, 드래그 이동, 확대 슬라이더 -->
+<script>
+(function () {
+  if (window.critCrop) return;
+  window.critCrop = function (dataUrl, ratio, cb) {
+    var VW = 300, VH = Math.round(VW / ratio);
+    var img = new Image();
+    img.onload = function () {
+      var iw = img.width, ih = img.height;
+      var base = Math.max(VW / iw, VH / ih);
+      var zoom = 1, ox = 0, oy = 0;
+      var ov = document.createElement("div");
+      ov.className = "overlay";
+      ov.style.cssText = "position:fixed;inset:0;z-index:100001;background:#0008;display:flex;align-items:center;justify-content:center";
+      ov.innerHTML = '<div style="background:var(--panel,#1d1b21);border:1px solid var(--line,#34313a);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px">' +
+        '<div style="font-size:14px;font-weight:800;color:var(--text,#f0edf3)">이미지 자르기</div>' +
+        '<div id="cc-vp" style="width:' + VW + 'px;height:' + VH + 'px;overflow:hidden;position:relative;border-radius:10px;border:1px solid var(--line,#34313a);cursor:grab;touch-action:none;background:#111"></div>' +
+        '<input id="cc-zoom" type="range" min="100" max="300" value="100" style="accent-color:var(--accent,#B26A9E)">' +
+        '<div style="display:flex;gap:8px;justify-content:flex-end">' +
+        '<button id="cc-c" style="background:var(--panel2,#26242c);color:var(--text,#f0edf3);border:1px solid var(--line,#34313a);border-radius:8px;padding:6px 14px;font-size:13px;cursor:pointer;font-family:inherit">취소</button>' +
+        '<button id="cc-ok" style="background:var(--accent,#B26A9E);color:#fff;border:1px solid var(--accent,#B26A9E);border-radius:8px;padding:6px 14px;font-size:13px;cursor:pointer;font-family:inherit">확인</button></div></div>';
+      var vp = ov.querySelector("#cc-vp");
+      var el = document.createElement("img");
+      el.src = dataUrl; el.draggable = false;
+      el.style.cssText = "position:absolute;pointer-events:none;user-select:none;max-width:none";
+      vp.appendChild(el);
+      function layout() {
+        var s = base * zoom, w = iw * s, h = ih * s;
+        var maxX = (w - VW) / 2, maxY = (h - VH) / 2;
+        ox = Math.max(-maxX, Math.min(maxX, ox));
+        oy = Math.max(-maxY, Math.min(maxY, oy));
+        el.style.width = w + "px"; el.style.height = h + "px";
+        el.style.left = (VW / 2 - w / 2 + ox) + "px";
+        el.style.top = (VH / 2 - h / 2 + oy) + "px";
+      }
+      layout();
+      vp.addEventListener("pointerdown", function (e) {
+        e.preventDefault();
+        vp.setPointerCapture(e.pointerId);
+        var sx = e.clientX, sy = e.clientY, o0x = ox, o0y = oy;
+        function mv(ev) { ox = o0x + (ev.clientX - sx); oy = o0y + (ev.clientY - sy); layout(); }
+        function up() { vp.removeEventListener("pointermove", mv); vp.removeEventListener("pointerup", up); }
+        vp.addEventListener("pointermove", mv);
+        vp.addEventListener("pointerup", up);
+      });
+      ov.querySelector("#cc-zoom").addEventListener("input", function (e) { zoom = e.target.value / 100; layout(); });
+      ov.querySelector("#cc-c").addEventListener("click", function () { ov.remove(); });
+      ov.addEventListener("click", function (e) { if (e.target === ov) ov.remove(); });
+      ov.querySelector("#cc-ok").addEventListener("click", function () {
+        var s = base * zoom;
+        var cv = document.createElement("canvas");
+        cv.width = VW * 2; cv.height = VH * 2;
+        var left = VW / 2 - iw * s / 2 + ox, top = VH / 2 - ih * s / 2 + oy;
+        cv.getContext("2d").drawImage(img, -left / s, -top / s, VW / s, VH / s, 0, 0, VW * 2, VH * 2);
+        var out = cv.toDataURL(/^data:image\/(png|webp|gif)/.test(String(img.src)) ? "image/png" : "image/jpeg", 0.92);
+        ov.remove();
+        cb(out);
+      });
+      document.body.appendChild(ov);
+    };
+    img.src = dataUrl;
+  };
+})();
+</script>
+<!-- crit-fancy-all: 앱의 모든 셀렉트를 테마 드롭다운으로 (동적 생성/표시 전환 포함) -->
+<style>
+  .fwrap { position: relative; flex: 1; display: flex; min-width: 0; }
+  .fwrap .fsel { flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; padding: 8px 11px;
+    color: var(--text); font-size: 13px; font-family: inherit; cursor: pointer; text-align: left; min-width: 0; }
+  .fwrap .fsel { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .fwrap .fsel::after { content: "▾"; font-size: 10px; color: var(--dim); flex: none; }
+  .fwrap .fsel:hover, .fwrap .fsel.open { border-color: color-mix(in srgb, var(--accent) 55%, var(--line)); }
+  .fwrap .fmenu { position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 80;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 4px;
+    box-shadow: 0 10px 30px #0007; max-height: 240px; overflow-y: auto; }
+  .fwrap .fitem { padding: 7px 11px; border-radius: 7px; font-size: 13px; color: var(--text); cursor: pointer;
+    display: flex; align-items: center; gap: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .fwrap .fitem:hover { background: color-mix(in srgb, var(--accent) 20%, var(--panel2)); }
+  .fwrap .fitem.on { color: color-mix(in srgb, var(--accent) 65%, var(--text)); font-weight: 700; }
+  .fwrap .fdot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+</style>
+<script>
+(function () {
+  function dotColor(val) {
+    try {
+      var c = (typeof cats !== "undefined") && cats.find ? cats.find(function (x) { return x.key === val; }) : null;
+      return c ? c.color : null;
+    } catch (e) { return null; }
+  }
+  function visible(sel) { return sel.style.display !== "none"; }
+  function fancify(sel) {
+    if (sel.dataset.fancy) return;
+    sel.dataset.fancy = "1";
+    var wrap = document.createElement("span");
+    wrap.className = "fwrap";
+    sel.parentNode.insertBefore(wrap, sel);
+    wrap.appendChild(sel);
+    var wasHidden = !visible(sel);
+    sel.style.display = "none";
+    var btn = document.createElement("button");
+    btn.type = "button"; btn.className = "fsel"; /* critkeep 없음: 게시본에서는 버튼 숨김 규칙으로 자동 제거 */
+    if (wasHidden) wrap.style.display = "none";
+    function label() {
+      var o = sel.selectedOptions[0];
+      btn.innerHTML = "";
+      if (o) {
+        var col = dotColor(o.value);
+        if (col) { var d = document.createElement("span"); d.className = "fdot"; d.style.background = col; btn.appendChild(d); }
+        btn.appendChild(document.createTextNode(o.textContent));
+      } else btn.appendChild(document.createTextNode("선택"));
+    }
+    label();
+    wrap.appendChild(btn);
+    var menu = null;
+    function close() { if (menu) { menu.remove(); menu = null; btn.classList.remove("open"); } }
+    btn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      if (menu) { close(); return; }
+      menu = document.createElement("div");
+      menu.className = "fmenu";
+      Array.prototype.forEach.call(sel.options, function (o) {
+        var it = document.createElement("div");
+        it.className = "fitem" + (o.selected ? " on" : "");
+        var col = dotColor(o.value);
+        if (col) { var d = document.createElement("span"); d.className = "fdot"; d.style.background = col; it.appendChild(d); }
+        it.appendChild(document.createTextNode(o.textContent));
+        it.addEventListener("click", function (e2) {
+          e2.stopPropagation();
+          sel.value = o.value;
+          sel.dispatchEvent(new Event("change", { bubbles: true }));
+          sel.dispatchEvent(new Event("input", { bubbles: true }));
+          label(); close();
+        });
+        menu.appendChild(it);
+      });
+      wrap.appendChild(menu);
+      btn.classList.add("open");
+    });
+    document.addEventListener("click", close);
+    /* select의 표시/값이 바뀌면 버튼도 동기화 (예: 온보딩 모니터 선택 표시 전환) */
+    var reHiding = false;
+    new MutationObserver(function () {
+      if (reHiding) { reHiding = false; return; }
+      if (visible(sel)) {
+        /* 외부 코드가 select를 다시 보이게 함(예: 온보딩) → 래퍼만 보이고 원본은 계속 숨김 */
+        wrap.style.display = "";
+        reHiding = true;
+        sel.style.display = "none";
+        label();
+      } else {
+        wrap.style.display = "none";
+      }
+    }).observe(sel, { attributes: true, attributeFilter: ["style", "class"] });
+    sel.addEventListener("change", label);
+    /* 옵션이 뒤늦게 채워지는 경우(모니터 목록 등) 라벨 갱신 */
+    new MutationObserver(label).observe(sel, { childList: true });
+  }
+  function scan(root) {
+    if (!root.querySelectorAll) return;
+    root.querySelectorAll("select:not([data-fancy])").forEach(fancify);
+  }
+  scan(document);
+  new MutationObserver(function (ms) {
+    ms.forEach(function (m) {
+      Array.prototype.forEach.call(m.addedNodes, function (n) {
+        if (n.nodeType === 1) { if (n.tagName === "SELECT") fancify(n); else scan(n); }
+      });
+    });
+  }).observe(document.body, { childList: true, subtree: true });
+})();
+</script>
+<!-- crit-editmode-visual: 편집 모드 켜짐을 확실히 보이게 (버튼 강조 + 라벨 + 블록 호버 표시) -->
+<style>
+  body.editing #editbtn { background: color-mix(in srgb, var(--accent) 26%, var(--panel2)) !important;
+    border-color: color-mix(in srgb, var(--accent) 55%, var(--line)) !important;
+    color: color-mix(in srgb, var(--accent) 62%, var(--text)) !important; font-weight: 700; }
+  body.editing [contenteditable="true"]:hover { outline: 1px dashed color-mix(in srgb, var(--accent) 45%, var(--line));
+    border-radius: 6px; }
+  body.editing [contenteditable="true"]:focus { outline: 1px solid color-mix(in srgb, var(--accent) 60%, var(--line));
+    border-radius: 6px; }
+</style>
+<script>
+(function () {
+  var b = document.getElementById("editbtn");
+  if (!b) return;
+  b.addEventListener("click", function () {
+    setTimeout(function () {
+      b.textContent = document.body.classList.contains("editing") ? "편집 중 — 클릭해 종료" : "편집 모드";
+    }, 0);
+  });
+})();
+</script>
+<!-- crit-extlink: 외부 링크는 항상 기본 브라우저로 (프로토콜 없는 주소 보정 포함) -->
+<script>
+document.addEventListener("click", function (e) {
+  var a = e.target.closest ? e.target.closest("a[href]") : null;
+  if (!a) return;
+  var raw = a.getAttribute("href") || "";
+  if (/^(#|javascript:|mailto:)/i.test(raw)) return;
+  var isAbs = /^https?:\/\//i.test(raw);
+  var domainish = /^[\w-]+(\.[\w-]+)+([\/?#]|$)/.test(raw) && raw.indexOf(".html") === -1;
+  if (!isAbs && !domainish) return; /* 내부 페이지 이동은 그대로 */
+  e.preventDefault();
+  e.stopPropagation();
+  var u = isAbs ? raw : "https://" + raw;
+  if (window.api && window.api.app && window.api.app.openExternal) window.api.app.openExternal(u);
+  else window.open(u, "_blank", "noopener");
+}, true);
+</script>
+<style>/* crit-preview-notheme: 게시본에서는 테마 변경 불가 */ html.crit-preview .settings { display: none !important; }</style>
+<style>/* crit-chipedit-css: 칩 연필 버튼 */
+.chip .chipedit { margin-left: 5px; font-size: 10px; color: var(--dim); cursor: pointer; }
+.chip .chipedit:hover { color: color-mix(in srgb, var(--accent) 65%, var(--text)); }
+</style>
+<!-- crit-msgr-static: 메신저 보기는 주인이 앱에서 선택해 저장 - 게시본(방문자)에서는 버튼 숨김 -->
+<script>
+(function () {
+  var mb = document.getElementById("msgrbtn");
+  var MKEY = "crit-msgr-state:" + critFreeKey();
+  var saved = null;
+  try { saved = localStorage.getItem(MKEY); } catch (e) {}
+  if (saved === "1") { document.body.classList.add("msgr"); if (mb) mb.classList.add("on"); }
+  else if (saved === "0") { document.body.classList.remove("msgr"); if (mb) mb.classList.remove("on"); }
+  try { if (typeof alignConsecutiveWidths === "function") alignConsecutiveWidths(); } catch (eAlign) {}
+  var isReader = false;
+  try { isReader = (window.__CRIT_PREVIEW || new URLSearchParams(location.search).has("preview")); } catch (e) {}
+  if (isReader) { if (mb) mb.style.display = "none"; return; }
+  if (mb) mb.addEventListener("click", function () {
+    try { localStorage.setItem(MKEY, document.body.classList.contains("msgr") ? "1" : "0"); } catch (e) {}
+  });
+})();
+</script>
+<script>(function(){var CRIT_BUILD_TS=1785945673310;setTimeout(function(){try{fetch(location.pathname,{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){var m=t.match(/CRIT_BUILD_TS ?= ?(\d+)/);if(!m)return;var latest=Number(m[1]);if(latest>CRIT_BUILD_TS&&sessionStorage.getItem("crit-seen-build")!==String(latest)){sessionStorage.setItem("crit-seen-build",String(latest));location.reload();}}).catch(function(){});}catch(e){}},1200);})();</script></body></html>
